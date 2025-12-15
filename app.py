@@ -89,7 +89,13 @@ def token_required(f):
     return decorated
 
 
-# --- Health Check Route ---
+# --- Health Check Routes ---
+
+@app.route('/', methods=['GET'])
+def root():
+    """HANDLE THE ROOT PATH / BY DIRECTING TO THE STATUS CHECK."""
+    # This resolves the 404 issue on the primary URL
+    return status() 
 
 @app.route('/status', methods=['GET'])
 def status():
@@ -118,7 +124,7 @@ def register_user():
     password = data['password']
     
     if len(password) < 8:
-         return jsonify({"error": "Password must be at least 8 characters long"}), 400
+          return jsonify({"error": "Password must be at least 8 characters long"}), 400
 
     if users_collection.find_one({'$or': [{'username': username}, {'email': email}]}):
         return jsonify({"error": "Username or email already exists"}), 409
@@ -379,8 +385,8 @@ def submit_review(current_user):
         rating = int(data['rating'])
         
         if not 1 <= rating <= 5:
-             return jsonify({"error": "Rating must be between 1 and 5 stars"}), 400
-             
+              return jsonify({"error": "Rating must be between 1 and 5 stars"}), 400
+              
     except Exception:
         return jsonify({"error": "Invalid business ID or rating format"}), 400
 
@@ -446,6 +452,6 @@ def submit_review(current_user):
 
 if __name__ == '__main__':
     if not os.environ.get('MONGO_URI'):
-         print("ERROR: MONGO_URI is not set. Please check your .env file and config.py.")
+          print("ERROR: MONGO_URI is not set. Please check your .env file and config.py.")
     
     app.run(debug=True)
