@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Center: ZIMBABWE</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.3.0/ol.css">
+    
+    <style>
+        /* Base Layout Reset */
+        * { box-sizing: border-box; }
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            padding: 0; 
+            font-family: Arial, sans-serif; 
+            background-color: #f8f8f8; /* Light background for the whole page */
+            overflow: hidden; 
+        }
+        
+        /* Main Structure for Fixed/Scroll Layout */
+        .main-wrapper { 
+            padding: 20px;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #ddd; 
+            padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+        
+        .content-area { 
+            display: flex; 
+            gap: 20px; 
+            flex-grow: 1; 
+            min-height: 0; 
+        }
+        
+        /* Left Panel: Scrollable Controls and Results */
+        .left-panel {
+            width: 450px; 
+            overflow-y: auto; 
+            padding-right: 15px;
+            flex-shrink: 0;
+            min-height: 100%;
+            position: relative;
+        }
+
+        /* Right Panel: Fixed Map */
+        .map-panel {
+            flex-grow: 1;
+            height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); 
+        }
+
+        /* Map Styling */
+        #map { 
+            height: 100%; 
+            width: 100%; 
+            border-radius: 6px; 
+            border: 2px solid #0073bb; /* Brand Blue Border */
+            position: relative; 
+        }
+
+        /* OpenLayers Control Styling and Z-Index Fix */
+        .ol-zoom {
+            top: 20px;
+            left: 20px;
+            z-index: 101; 
+            background-color: transparent !important; 
+        }
+        .ol-zoom .ol-control button {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            color: #0073bb; /* Brand Blue */
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+        
+        .ol-custom-layer-switcher {
+            top: 20px;
+            right: 20px;
+            position: absolute; 
+            padding: 10px;
+            background-color: rgba(255,255,255,0.95); 
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100; 
+        }
+        .ol-custom-layer-switcher label {
+            display: block;
+            font-weight: normal;
+            font-size: 0.9em;
+            margin: 4px 0;
+            cursor: pointer;
+        }
+        
+        /* --- General and Form Styling Improvements --- */
+        h1 { color: #0073bb; margin: 0; } /* Brand Blue */
+        .user-info { font-size: 1.1em; font-weight: bold; }
+        .section { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); margin-bottom: 20px; }
+        .section h2 { margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+
+        label { 
+            display: block; 
+            margin-bottom: 4px; 
+            font-weight: bold; 
+            margin-top: 15px; 
+            font-size: 0.95em;
+            color: #555;
+        }
+        input[type="text"], input[type="search"], input[type="tel"], input[type="number"] { 
+            width: 100%; 
+            padding: 10px 12px; 
+            margin-bottom: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            border-color: #0073bb; 
+            outline: none;
+        }
+        
+        button { 
+            background-color: #0073bb; /* Primary Button Color (Brand Blue) */
+            color: white; 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            margin-top: 15px; 
+            font-size: 16px; 
+            font-weight: bold;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%; 
+        }
+        button:hover { 
+            background-color: #005a94; /* Darker Blue for hover */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+        button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
+
+        .details-button { 
+            width: auto; 
+            margin-left: 0; 
+            margin-top: 5px; 
+            background-color: #0073bb; /* Consistent Brand Blue */
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .details-button:hover {
+            background-color: #005a94;
+        }
+
+        /* Collapsible Form Styling */
+        .form-content-wrapper {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out;
+        }
+        .collapsed .form-content-wrapper {
+            max-height: 0;
+            padding: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .form-toggle-link {
+            font-weight: bold;
+            color: #0073bb;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 5px 0;
+            transition: color 0.2s;
+        }
+        
+        /* Fixed "Add Business" Button */
+        #fixedAddBusinessBtn {
+            position: sticky; 
+            bottom: 20px;
+            width: 100%;
+            z-index: 500;
+            display: none; 
+            margin-top: 0; 
+            background-color: #0073bb; 
+        }
+        
+        /* Rest of necessary styles */
+        .map-instruction { background-color: #fff8e1; color: #666; padding: 10px; border-radius: 4px; margin-bottom: 10px; border-left: 4px solid #ffc107; font-size: 0.9em; }
+        .message { margin-top: 20px; padding: 10px; border-radius: 4px; font-weight: bold; display: none; }
+        .success { background-color: #e6ffed; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8e6e6; color: #721c24; border: 1px solid #f5c6cb; }
+        .business-list { list-style: none; padding: 0; margin: 0; }
+        .business-item { border: 1px solid #eee; padding: 15px; margin-bottom: 15px; border-radius: 6px; transition: background-color 0.2s; background: white; }
+        .business-item h3 { margin-top: 0; color: #0073bb; } /* Brand Blue for business names */
+        .rating { font-weight: bold; color: #ff9800; font-size: 1.1em;}
+        
+        /* OL Popup Styling */
+        .ol-popup button { width: auto; margin-top: 8px; padding: 6px 12px; font-size: 13px; }
+
+        /* Responsiveness */
+        @media (max-width: 1200px) {
+            html, body { overflow: auto; }
+            .main-wrapper { height: auto; padding: 10px; }
+            .content-area { flex-direction: column; height: auto; gap: 10px; }
+            .left-panel { width: 100%; padding-right: 0; overflow-y: visible; min-height: auto; }
+            .map-panel { width: 100%; height: 400px; position: static; }
+            #fixedAddBusinessBtn { position: static; box-shadow: none; margin-top: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v7.3.0/dist/ol.js"></script>
+
+    <div class="main-wrapper">
+        <div class="header">
+            <h1>🗺️ Business Center: ZIMBABWE</h1>
+            <div class="user-info">Logged in as: <span id="userDisplay">Guest</span> (<a href="index.html">Logout</a>)</div>
+        </div>
+
+        <div class="content-area">
+            
+            <div class="left-panel">
+                
+                <div class="section">
+                    <h2>🔍 Find Businesses</h2>
+                    <form id="searchForm">
+                        <label for="search-term">Search Term (Name/Address):</label>
+                        <input type="search" id="search-term" placeholder="e.g., Joe's Pizza">
+
+                        <label for="city-filter">City Filter:</label>
+                        <input type="text" id="city-filter" placeholder="e.g., Harare, Bulawayo">
+                        
+                        <label for="category-filter">Category:</label>
+                        <input type="text" id="category-filter" placeholder="e.g., Restaurant">
+                        
+                        <button type="submit">Search Businesses</button>
+                    </form>
+                </div>
+
+                <div class="section">
+                    <h2>Search Results</h2>
+                    <div id="resultsMessage" class="message"></div>
+                    <ul id="businessList" class="business-list">
+                        <li style="padding: 20px; text-align: center; color: #999;">
+                            Use the search form above to find businesses.
+                        </li>
+                    </ul>
+                </div>
+
+                <div id="registrationSection" class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h2>➕ Register a New Business</h2>
+                        <a href="#" class="form-toggle-link" onclick="toggleRegistrationForm(event)">Collapse</a>
+                    </div>
+                    
+                    <div class="map-instruction">
+                        📍 <strong>Click anywhere on the map (right)</strong> to set the business location.
+                    </div>
+
+                    <div id="registrationFormContent" class="form-content-wrapper">
+                        <form id="registerBusinessForm">
+                            <label for="biz-name">Business Name: *</label>
+                            <input type="text" id="biz-name" placeholder="e.g., Tony's Pizzeria" required>
+
+                            <label for="biz-address">Street Address: *</label>
+                            <input type="text" id="biz-address" placeholder="e.g., 123 Main Street" required>
+                            
+                            <label for="biz-city">City: *</label>
+                            <input type="text" id="biz-city" placeholder="e.g., Harare" required>
+                            
+                            <label for="biz-state">State/Province: *</label>
+                            <input type="text" id="biz-state" placeholder="e.g., Harare Province" required>
+                            
+                            <label for="biz-zip">Zip Code: *</label>
+                            <input type="text" id="biz-zip" placeholder="e.g., 00263" required>
+                            
+                            <label for="biz-category">Categories (comma-separated): *</label>
+                            <input type="text" id="biz-category" placeholder="e.g., Pizza, Italian, Restaurant" required>
+                            
+                            <label for="biz-phone">Phone Number: *</label>
+                            <input type="tel" id="biz-phone" placeholder="e.g., (263) 123-4567" required>
+
+                            <label for="biz-latitude">Latitude: *</label>
+                            <input type="text" id="biz-latitude" readonly placeholder="Click map to set location" required>
+
+                            <label for="biz-longitude">Longitude: *</label>
+                            <input type="text" id="biz-longitude" readonly placeholder="Click map to set location" required>
+                            
+                            <button type="submit" id="registerBtn" title="Please log in to register businesses">Register Business</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <button id="fixedAddBusinessBtn" class="details-button" onclick="toggleRegistrationForm(null, 'expand')">
+                    ➕ Add Business Location
+                </button>
+
+                <div id="singleBusinessView" class="section" style="display:none;">
+                    <button onclick="closeSingleView()" style="float: right; background: #999;">✕ Close</button>
+                    <h2 id="singleBizName"></h2>
+                    <p><strong>Rating:</strong> <span id="singleBizRating" class="rating"></span> ⭐ (<span id="singleBizReviewCount"></span> reviews)</p>
+                    <p><strong>Address:</strong> <span id="singleBizAddress"></span></p>
+                    <p><strong>Category:</strong> <span id="singleBizCategory"></span></p>
+                    <p><strong>Phone:</strong> <span id="singleBizPhone"></span></p>
+                    
+                    <h3>📝 Customer Reviews</h3>
+                    <ul id="reviewsList" class="business-list"></ul>
+
+                    <div id="reviewFormSection">
+                        <h4>Write Your Review</h4>
+                        <div id="reviewAuthMessage" class="map-instruction" style="display:none;">
+                            You must be logged in to post a review.
+                        </div>
+                        <form id="submitReviewForm">
+                            <input type="hidden" id="review-business-id">
+                            <label for="review-rating">Rating (1-5 stars): *</label>
+                            <input type="number" id="review-rating" min="1" max="5" required style="width: 100px;">
+                            
+                            <label for="review-text">Your Review: *</label>
+                            <input type="text" id="review-text" placeholder="Share your experience..." required>
+                            
+                            <button type="submit">Post Review</button>
+                        </form>
+                        <div id="reviewMessage" class="message"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="map-panel">
+                <div id="map"></div>
+                
+                <div id="popup" class="ol-popup">
+                    <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                    <div id="popup-content"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script>
+        // Use ol namespace for OpenLayers
+        const { Map, View, layer, source, Feature, geom, style, proj, control, interaction, Overlay } = ol;
+
+        // --- API Configuration & Helpers ---
+        const API_URL = 'http://127.0.0.1:5000/api'; 
+        
+        let map;
+        let vectorSource, clusterSource, vectorLayer;
+        let tempRegistrationFeature;
+        let tempVectorLayer;
+        let popupOverlay;
+
+        // Zimbabwe Focus Coordinates
+        const ZIMBABWE_CENTER_LONLAT = [29.7469, -19.0154]; 
+        const ZIMBABWE_INITIAL_ZOOM = 6; 
+        const defaultCenter = proj.fromLonLat(ZIMBABWE_CENTER_LONLAT); 
+
+        // --- OpenLayers Styles ---
+        const BRAND_BLUE = '#0073bb';
+        const BRAND_BLUE_RGBA = 'rgba(0, 115, 187, 0.8)';
+        
+        // Business icon changed to blue
+        const businessStyle = new style.Style({
+            text: new style.Text({
+                text: '🏢',
+                font: '24px sans-serif',
+                fill: new style.Fill({ color: BRAND_BLUE }), 
+                stroke: new style.Stroke({ color: '#ffffff', width: 2 }),
+                offsetY: -16
+            })
+        });
+
+        const clusterStyle = function(feature) {
+            const size = feature.get('features').length;
+            if (size > 1) {
+                return new style.Style({
+                    image: new style.Circle({
+                        radius: 12 + (Math.min(size, 100) / 10),
+                        fill: new style.Fill({ color: BRAND_BLUE_RGBA }), // Blue for cluster circle
+                        stroke: new style.Stroke({ color: 'rgba(255, 255, 255, 1)', width: 2 })
+                    }),
+                    text: new style.Text({
+                        text: size.toString(),
+                        fill: new style.Fill({ color: '#fff' }),
+                        font: 'bold 12px sans-serif'
+                    })
+                });
+            } else {
+                return businessStyle;
+            }
+        };
+
+        const tempMarkerStyle = new style.Style({
+            text: new style.Text({
+                text: '📍',
+                font: '32px sans-serif',
+                fill: new style.Fill({ color: BRAND_BLUE }),
+                stroke: new style.Stroke({ color: '#ffffff', width: 2 }),
+                offsetY: -16
+            })
+        });
+
+        // --- Helper Functions (Auth, Message, Display) ---
+        function getAuthHeaders() {
+            const token = localStorage.getItem('jwt_token');
+            if (!token) return {};
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        function displayMessage(elementId, type, text) {
+            const msg = document.getElementById(elementId);
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 7000);
+        }
+
+        function checkAuthAndDisplay() {
+            const username = localStorage.getItem('username');
+            const token = localStorage.getItem('jwt_token');
+            
+            document.getElementById('userDisplay').textContent = username || 'Guest (Not Logged In)'; 
+            
+            const registerBtn = document.getElementById('registerBtn');
+            const reviewForm = document.getElementById('submitReviewForm');
+            const reviewAuthMsg = document.getElementById('reviewAuthMessage');
+
+            if (!username || !token) {
+                registerBtn.disabled = true;
+                registerBtn.title = "Please log in to register businesses";
+                
+                if (reviewForm) reviewForm.style.display = 'none';
+                if (reviewAuthMsg) reviewAuthMsg.style.display = 'block';
+
+            } else {
+                registerBtn.disabled = false;
+                registerBtn.title = "Register Business";
+
+                if (reviewForm) reviewForm.style.display = 'block';
+                if (reviewAuthMsg) reviewAuthMsg.style.display = 'none';
+            }
+        }
+        
+        // --- Map Control & UI Functions (Collapsing/Expanding) ---
+        window.toggleRegistrationForm = function(event, forceState = null) {
+            if (event) event.preventDefault();
+            
+            const section = document.getElementById('registrationSection');
+            const toggleLink = section.querySelector('.form-toggle-link');
+            const fixedBtn = document.getElementById('fixedAddBusinessBtn');
+            
+            const isCollapsed = section.classList.contains('collapsed');
+            let shouldCollapse = isCollapsed;
+
+            if (forceState === 'expand') {
+                shouldCollapse = false;
+            } else if (forceState === 'collapse') {
+                shouldCollapse = true;
+            } else if (event) {
+                shouldCollapse = !isCollapsed;
+            }
+
+            if (shouldCollapse) {
+                section.classList.add('collapsed');
+                toggleLink.textContent = 'Expand';
+                fixedBtn.style.display = 'block';
+            } else {
+                section.classList.remove('collapsed');
+                toggleLink.textContent = 'Collapse';
+                fixedBtn.style.display = 'none';
+                // Scroll the form into view when expanding
+                document.querySelector('.left-panel').scrollTo({
+                    top: section.offsetTop - 20,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // --- MAP INITIALIZATION ---
+        function initMap() {
+            console.log('Initializing OpenLayers map...');
+            
+            const osmLayer = new layer.Tile({
+                title: '🗺️ Street Map',
+                type: 'base',
+                source: new source.OSM()
+            });
+
+            const satelliteLayer = new layer.Tile({
+                title: '🛰️ Satellite',
+                type: 'base',
+                source: new source.XYZ({
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    attributions: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                }),
+                visible: false
+            });
+
+            vectorSource = new source.Vector();
+            clusterSource = new source.Cluster({ distance: 40, source: vectorSource });
+            vectorLayer = new layer.Vector({ title: 'Businesses', source: clusterSource, style: clusterStyle });
+            tempVectorLayer = new layer.Vector({ title: 'Registration Point', source: new source.Vector(), style: tempMarkerStyle });
+
+            map = new Map({
+                target: 'map',
+                layers: [osmLayer, satelliteLayer, vectorLayer, tempVectorLayer],
+                view: new View({
+                    center: defaultCenter,
+                    zoom: ZIMBABWE_INITIAL_ZOOM
+                }),
+                controls: control.defaults.defaults({
+                    zoom: false, 
+                    rotate: false,
+                    attribution: true
+                })
+            });
+
+            // 1. Zoom Control (Top-Left)
+            map.addControl(new control.Zoom({
+                target: map.getTarget(), 
+                className: 'ol-zoom' 
+            }));
+
+
+            // 2. Layer Switcher (Top-Right)
+            const layerSwitcherContainer = document.createElement('div');
+            layerSwitcherContainer.className = 'ol-custom-layer-switcher ol-unselectable ol-control'; 
+            
+            const baseLayers = [osmLayer, satelliteLayer];
+            baseLayers.forEach(l => {
+                const label = document.createElement('label');
+                label.innerHTML = `<input type="radio" name="baseLayer" value="${l.get('title')}" ${l.getVisible() ? 'checked' : ''}> ${l.get('title')}`;
+                label.querySelector('input').addEventListener('change', (e) => {
+                    baseLayers.forEach(bl => bl.setVisible(bl.get('title') === e.target.value));
+                });
+                layerSwitcherContainer.appendChild(label);
+            });
+            map.addControl(new control.Control({ element: layerSwitcherContainer }));
+
+
+            // Popup Overlay Setup 
+            const container = document.getElementById('popup');
+            const closer = document.getElementById('popup-closer');
+            popupOverlay = new Overlay({
+                element: container,
+                autoPan: { animation: { duration: 250 } },
+                positioning: 'bottom-center',
+                offset: [0, -20]
+            });
+            map.addOverlay(popupOverlay);
+
+            closer.onclick = function() {
+                popupOverlay.setPosition(undefined);
+                closer.blur();
+                return false;
+            };
+
+            map.on('click', handleMapClick);
+        }
+
+        /**
+         * Resets the map view back to the default Zimbabwe extent and zoom.
+         */
+        function resetMapView() {
+            map.getView().animate({ 
+                center: defaultCenter, 
+                zoom: ZIMBABWE_INITIAL_ZOOM, 
+                duration: 800 
+            });
+            popupOverlay.setPosition(undefined);
+        }
+        
+        function handleMapClick(evt) {
+            popupOverlay.setPosition(undefined);
+
+            const feature = map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+                return feature;
+            });
+            
+            if (feature) {
+                const clusteredFeatures = feature.get('features');
+                if (clusteredFeatures && clusteredFeatures.length > 1) {
+                    // Zoom in on cluster to reveal individual features
+                    const extent = feature.getGeometry().getExtent();
+                    map.getView().fit(extent, { duration: 500, padding: [100, 100, 100, 100] });
+                } else if (clusteredFeatures && clusteredFeatures.length === 1) {
+                    // Show popup for single business
+                    const business = clusteredFeatures[0].get('businessData');
+                    showBusinessPopup(feature.getGeometry().getCoordinates(), business);
+                }
+            } else {
+                // Set coordinates for registration if no feature was clicked
+                setRegistrationCoords(evt);
+            }
+        }
+        
+        function showBusinessPopup(coordinates, business) {
+            const contentDiv = document.getElementById('popup-content');
+            contentDiv.innerHTML = `
+                <div class="popup-content">
+                    <strong style="font-size: 1.1em;">${business.name}</strong><br>
+                    <span style="color: #ff9800;">⭐ ${business.avg_rating ? parseFloat(business.avg_rating).toFixed(1) : 'N/A'}</span> 
+                    (${business.review_count || 0} reviews)<br>
+                    <small>${business.city}</small><br>
+                    <button onclick="fetchBusinessDetails('${business._id}')" class="details-button" style="background-color: #0073bb;">
+                        View Details
+                    </button>
+                </div>
+            `;
+            popupOverlay.setPosition(coordinates);
+        }
+
+        function setRegistrationCoords(evt) {
+            const coords3857 = evt.coordinate;
+            const coords4326 = proj.toLonLat(coords3857);
+            const lng = coords4326[0].toFixed(6);
+            const lat = coords4326[1].toFixed(6);
+
+            tempVectorLayer.getSource().clear();
+
+            const geometry = new geom.Point(coords3857);
+            tempRegistrationFeature = new Feature({ geometry });
+            tempRegistrationFeature.setStyle(tempMarkerStyle);
+            tempVectorLayer.getSource().addFeature(tempRegistrationFeature);
+            
+            map.getView().animate({ center: coords3857, zoom: 14, duration: 300 });
+
+            const contentDiv = document.getElementById('popup-content');
+            contentDiv.innerHTML = `
+                <div class="popup-content">
+                    <strong>New Location:</strong><br>
+                    Lat: ${lat}<br>
+                    Lng: ${lng}<br>
+                    <button class="details-button" onclick="openRegistrationForm('${lat}', '${lng}')" style="background-color: green;">
+                        Use this location for Registration
+                    </button>
+                </div>
+            `;
+            popupOverlay.setPosition(coords3857);
+        }
+
+        window.openRegistrationForm = function(lat, lng) {
+            document.getElementById('biz-latitude').value = lat;
+            document.getElementById('biz-longitude').value = lng;
+            
+            toggleRegistrationForm(null, 'expand');
+            
+            popupOverlay.setPosition(undefined);
+            displayMessage('resultsMessage', 'success', 'Coordinates transferred! Fill out the rest of the form to register.');
+        };
+
+
+        function displayBusinessesOnMap(businesses) {
+            vectorSource.clear();
+            popupOverlay.setPosition(undefined);
+
+            const features = businesses.map(business => {
+                const lat = parseFloat(business.latitude);
+                const lng = parseFloat(business.longitude);
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const coords3857 = proj.fromLonLat([lng, lat]);
+                    const feature = new Feature({
+                        geometry: new geom.Point(coords3857),
+                        businessData: business
+                    });
+                    return feature;
+                }
+                return null;
+            }).filter(f => f !== null);
+
+            vectorSource.addFeatures(features);
+            
+            if (features.length > 0) {
+                const extent = vectorSource.getExtent();
+                // Pad the map view to account for the left panel (450px width + 20px padding)
+                map.getView().fit(extent, { padding: [50, 50, 50, 470], duration: 500, maxZoom: 15 });
+            } else {
+                resetMapView();
+            }
+        }
+
+        // --- SEARCH BUSINESSES ---
+        document.getElementById('searchForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const searchTerm = document.getElementById('search-term').value.trim();
+            const cityFilter = document.getElementById('city-filter').value.trim();
+            const categoryFilter = document.getElementById('category-filter').value.trim();
+
+            const params = new URLSearchParams();
+            if (searchTerm) params.append('search', searchTerm);
+            if (cityFilter) params.append('city', cityFilter);
+            if (categoryFilter) params.append('category', categoryFilter);
+
+            const url = `${API_URL}/businesses?${params.toString()}`;
+            console.log(`Fetching businesses from: ${url}`);
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const list = document.getElementById('businessList');
+                list.innerHTML = ''; 
+                document.getElementById('singleBusinessView').style.display = 'none'; 
+                resetMapView(); 
+
+                if (response.ok && data.businesses && data.businesses.length > 0) {
+                    displayMessage('resultsMessage', 'success', `✅ Found ${data.total_count} businesses. (Registration form collapsed)`);
+                    
+                    displayBusinessesOnMap(data.businesses);
+                    
+                    toggleRegistrationForm(null, 'collapse');
+
+                    data.businesses.forEach(business => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'business-item';
+                        listItem.innerHTML = `
+                            <h3>${business.name}</h3>
+                            <p style="margin: 5px 0; color: #666;">
+                                📍 ${business.address}, ${business.city}, ${business.state}
+                            </p>
+                            <p style="margin: 5px 0;">
+                                <span class="rating">⭐ ${business.avg_rating ? parseFloat(business.avg_rating).toFixed(1) : 'N/A'}</span> 
+                                (${business.review_count || 0} reviews)
+                            </p>
+                            <button class="details-button" onclick="fetchBusinessDetails('${business._id}')">
+                                View Details & Reviews
+                            </button>
+                        `;
+                        list.appendChild(listItem);
+                    });
+
+                } else {
+                    displayMessage('resultsMessage', 'error', data.message || '❌ No businesses found matching your criteria.');
+                    list.innerHTML = '<li style="padding: 20px; text-align: center; color: #999;">No results found. Try a different search.</li>';
+                    vectorSource.clear(); 
+                    resetMapView(); 
+                }
+            } catch (error) {
+                displayMessage('resultsMessage', 'error', '❌ Network error or failed to connect to API. Check your backend server.');
+                console.error('Search Error:', error);
+            }
+        });
+
+
+        // --- REGISTER NEW BUSINESS ---
+        document.getElementById('registerBusinessForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const lat = document.getElementById('biz-latitude').value;
+            const lng = document.getElementById('biz-longitude').value;
+            
+            if (!lat || !lng) {
+                displayMessage('resultsMessage', 'error', '📍 Please set the business location using the map on the right first!');
+                return;
+            }
+            if (!localStorage.getItem('jwt_token')) {
+                 displayMessage('resultsMessage', 'error', '❌ Registration requires you to be logged in.');
+                 return;
+            }
+
+            const businessData = {
+                name: document.getElementById('biz-name').value.trim(),
+                address: document.getElementById('biz-address').value.trim(),
+                city: document.getElementById('biz-city').value.trim(),
+                state: document.getElementById('biz-state').value.trim(),
+                zip_code: document.getElementById('biz-zip').value.trim(),
+                category: document.getElementById('biz-category').value.split(',').map(c => c.trim()).filter(c => c.length > 0), 
+                phone: document.getElementById('biz-phone').value.trim(),
+                latitude: lat,
+                longitude: lng
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/businesses`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(businessData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayMessage('resultsMessage', 'success', `✅ Business "${businessData.name}" registered successfully!`);
+                    this.reset();
+                    tempVectorLayer.getSource().clear();
+                    popupOverlay.setPosition(undefined);
+                    
+                    toggleRegistrationForm(null, 'collapse');
+                    
+                    document.getElementById('searchForm').dispatchEvent(new Event('submit')); 
+                } else if (response.status === 409) {
+                    displayMessage('resultsMessage', 'error', '⚠️ ' + (data.error || 'A business with this name and address already exists.'));
+                } else {
+                    displayMessage('resultsMessage', 'error', '❌ ' + (data.error || `Registration failed. Status: ${response.status}`));
+                }
+            } catch (error) {
+                displayMessage('resultsMessage', 'error', '❌ Network error during business registration. Check your backend server.');
+                console.error('Registration Error:', error);
+            }
+        });
+
+
+        // --- VIEW BUSINESS DETAILS ---
+        async function fetchBusinessDetails(businessId) {
+            try {
+                const response = await fetch(`${API_URL}/businesses/${businessId}`);
+                const data = await response.json();
+                
+                const view = document.getElementById('singleBusinessView');
+                
+                if (response.ok) {
+                    const business = data.business;
+                    
+                    // Center and zoom map to the single business location
+                    const coords3857 = proj.fromLonLat([business.longitude, business.latitude]);
+                    map.getView().animate({ center: coords3857, zoom: 16, duration: 500 });
+                    
+                    showBusinessPopup(coords3857, business);
+
+                    document.getElementById('singleBizName').textContent = business.name;
+                    document.getElementById('singleBizRating').textContent = business.avg_rating ? parseFloat(business.avg_rating).toFixed(1) : 'N/A';
+                    document.getElementById('singleBizReviewCount').textContent = business.review_count || 0;
+                    document.getElementById('singleBizAddress').textContent = 
+                        `${business.address}, ${business.city}, ${business.state} ${business.zip_code}`;
+                    document.getElementById('singleBizCategory').textContent = business.category.join(', ');
+                    document.getElementById('singleBizPhone').textContent = business.phone || 'N/A';
+
+                    const reviewsList = document.getElementById('reviewsList');
+                    reviewsList.innerHTML = '';
+                    if (business.reviews && business.reviews.length > 0) {
+                        business.reviews.sort((a, b) => new Date(b.date_posted) - new Date(a.date_posted)); 
+                        business.reviews.forEach(review => {
+                            const reviewItem = document.createElement('li');
+                            reviewItem.className = 'business-item';
+                            reviewItem.innerHTML = `
+                                <strong style="color: #0073bb;">${review.username || 'Anonymous'}</strong> 
+                                <span class="rating">⭐ ${review.rating}/5</span> 
+                                <small style="color: #999;">(${new Date(review.date_posted).toLocaleDateString()})</small>
+                                <p style="margin: 10px 0 0 0;">${review.review_text}</p>
+                            `;
+                            reviewsList.appendChild(reviewItem);
+                        });
+                    } else {
+                        reviewsList.innerHTML = '<li style="padding: 20px; text-align: center; color: #999;">No reviews yet. Be the first to review!</li>';
+                    }
+
+                    document.getElementById('review-business-id').value = business._id;
+                    checkAuthAndDisplay(); 
+
+                    view.style.display = 'block';
+                    document.querySelector('.left-panel').scrollTo({ behavior: 'smooth', top: view.offsetTop - 20 });
+                    
+                } else {
+                    displayMessage('resultsMessage', 'error', '❌ ' + (data.error || 'Failed to fetch business details.'));
+                }
+            } catch (error) {
+                displayMessage('resultsMessage', 'error', '❌ Network error while fetching details.');
+                console.error('Details Fetch Error:', error);
+            }
+        }
+
+        function closeSingleView() {
+            document.getElementById('singleBusinessView').style.display = 'none';
+            // Reset map to Zimbabwe view when closing the details panel
+            resetMapView();
+        }
+
+
+        // --- SUBMIT REVIEW ---
+        document.getElementById('submitReviewForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const reviewData = {
+                business_id: document.getElementById('review-business-id').value,
+                rating: parseInt(document.getElementById('review-rating').value),
+                review_text: document.getElementById('review-text').value.trim()
+            };
+            
+             if (!localStorage.getItem('jwt_token')) {
+                 displayMessage('reviewMessage', 'error', '❌ You must be logged in to post a review.');
+                 return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/reviews`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(reviewData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayMessage('reviewMessage', 'success', 
+                        `✅ Review posted! New average rating: ${parseFloat(data.new_avg_rating).toFixed(1)} ⭐`);
+                    this.reset();
+                    
+                    setTimeout(() => {
+                        // Re-fetch details to refresh the review list and rating
+                        fetchBusinessDetails(reviewData.business_id);
+                    }, 500);
+                } else {
+                    displayMessage('reviewMessage', 'error', '❌ ' + (data.error || 'Failed to submit review.'));
+                }
+            } catch (error) {
+                displayMessage('reviewMessage', 'error', '❌ Network error during review submission. Check your backend server.');
+                console.error('Review Submission Error:', error);
+            }
+        });
+
+
+        // --- INITIALIZE ON LOAD ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded');
+            checkAuthAndDisplay();
+            
+            initMap(); 
+            
+            // Set initial state to collapsed for cleaner startup
+            toggleRegistrationForm(null, 'collapse');
+        });
+
+        // Make functions globally accessible for HTML onclick attributes
+        window.fetchBusinessDetails = fetchBusinessDetails;
+        window.closeSingleView = closeSingleView;
+    </script>
+
+</body>
+</html>

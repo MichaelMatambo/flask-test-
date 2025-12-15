@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Road Route & Distance Calculator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Load Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        /* Set a fixed height for the map container */
+        #map { height: 500px; }
+        .leaflet-routing-line {
+            stroke: #10B981; /* Tailwind green-500 */
+            stroke-width: 5;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans p-4 sm:p-8">
+
+    <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-xl overflow-hidden">
+        
+        <!-- Header -->
+        <div class="p-6 bg-blue-700 text-white">
+            <h1 class="text-3xl font-bold tracking-tight">Road Route & Navigation Tool</h1>
+            <p class="text-blue-300 mt-1">Calculates true road distance and duration using the OpenRouteService API.</p>
+        </div>
+
+        <div class="p-6 space-y-6">
+            
+            <!-- Input Form -->
+            <div id="input-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                
+                <!-- Origin Input (Custom Input or Geolocation) -->
+                <div class="md:col-span-2">
+                    <div class="flex space-x-2">
+                        <input type="text" id="origin" placeholder="1. Origin (Enter Address or Use Location)" 
+                               class="flex-grow p-3 border border-gray-300 rounded-l-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-sm"
+                               value="Harare"> 
+                        <button onclick="getCurrentLocationAndSetOrigin()"
+                                class="p-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-r-lg shadow-md transition duration-150 ease-in-out flex items-center justify-center space-x-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            </svg>
+                            <span class="hidden sm:inline">My Location</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <input type="text" id="destination" placeholder="2. Enter Destination Location" 
+                       class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-sm"
+                       value="Mutare">
+                
+                <button onclick="calculateRoute()"
+                        class="w-full p-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-[1.01]">
+                    Get Road Route
+                </button>
+            </div>
+
+            <!-- Loading and Result Display -->
+            <div id="loading-spinner" class="hidden text-center p-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                <p class="text-blue-600 mt-2">Calculating Road Route...</p>
+            </div>
+            
+            <div id="result" class="hidden p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow-inner">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <p class="text-lg font-medium text-gray-800">
+                        <span id="distance-label">Road Distance</span>: <span id="distance-output" class="text-2xl font-bold text-blue-700"></span>
+                    </p>
+                    <p class="text-lg font-medium text-gray-800">
+                        Driving Duration: <span id="duration-output" class="text-2xl font-bold text-blue-700"></span>
+                    </p>
+                </div>
+                <p class="text-sm text-gray-500 mt-3" id="location-details"></p>
+            </div>
+
+            <div id="error-message" class="hidden p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg">
+                <span id="error-text"></span>
+            </div>
+
+            <!-- Map Container -->
+            <div id="map" class="rounded-lg border border-gray-300 shadow-md mb-6"></div>
+
+            <!-- Capacity Analysis Section -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Road Capacity Improvement Analysis</h2>
+                <button onclick="generateCapacityAnalysis()"
+                        class="w-full p-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-[1.01] flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21l1.846-5.846A7.447 7.447 0 0115 10.5h2.25a3.75 3.75 0 10-7.5 0v.524M12.536 21.036l.75-.75M2.25 21h17.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H15M4.5 9.75V4.5a1.5 1.5 0 011.5-1.5h12a1.5 1.5 0 011.5 1.5v3.75" />
+                    </svg>
+                    <span id="analysis-button-text">Generate Analysis for Harare-Mutare</span>
+                </button>
+                
+                <div id="analysis-loading-spinner" class="hidden text-center p-4 mt-4">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+                    <p class="text-purple-600 mt-2">Generating Infrastructure Analysis...</p>
+                </div>
+
+                <div id="analysis-output" class="hidden mt-4 p-4 bg-purple-50 border-l-4 border-purple-500 rounded-lg shadow-inner prose max-w-none">
+                    <p id="analysis-text" class="text-gray-700"></p>
+                    <div id="analysis-sources" class="text-xs text-gray-500 mt-4 pt-2 border-t border-purple-200"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL STATE & CONFIGURATION ---
+        let map;
+        let originMarker, destinationMarker;
+        let currentRoute; // Holds the L.GeoJSON layer for the road route
+        let originCoords, destCoords; // Store lat/lon for routing
+        
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const loadingDiv = document.getElementById('loading-spinner');
+        const analysisLoadingDiv = document.getElementById('analysis-loading-spinner');
+        const analysisOutputDiv = document.getElementById('analysis-output');
+        const analysisText = document.getElementById('analysis-text');
+        const analysisSources = document.getElementById('analysis-sources');
+        const analysisButtonTextSpan = document.getElementById('analysis-button-text');
+
+
+        const ORS_ENDPOINT = "https://routing.openstreetmap.de/routed-foot/route/v1/driving/"; 
+        const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search?format=json&q=";
+        const MAX_RETRIES = 3;
+        const INITIAL_BACKOFF_MS = 1000;
+        const LLM_MODEL = 'gemini-2.5-flash-preview-09-2025';
+        const LLM_API_KEY = ""; // Placeholder for the actual API key provided by the environment
+
+        // --- UTILITY FUNCTIONS ---
+        
+        // Sleep function for exponential backoff
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        /**
+         * Calculates the straight-line (Haversine) distance between two points in kilometers.
+         */
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of Earth in kilometers
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLon = (lon2 - lon1) * (Math.PI / 180);
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distance in km
+        }
+
+        /**
+         * Clears all existing route layers and markers from the map.
+         */
+        function clearMap() {
+            if (originMarker) map.removeLayer(originMarker);
+            if (destinationMarker) map.removeLayer(destinationMarker);
+            if (currentRoute) map.removeLayer(currentRoute);
+            resultDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+        }
+        
+        /**
+         * Converts duration in seconds to a human-readable format (e.g., 1h 30m).
+         */
+        function formatDuration(seconds) {
+            if (seconds === null) return "N/A";
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            let output = '';
+            if (hours > 0) output += `${hours}h `;
+            output += `${minutes}m`;
+            return output.trim();
+        }
+
+        /**
+         * Displays an error message in the dedicated UI element.
+         */
+        function displayError(message) {
+            loadingDiv.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+
+        // --- GEOLOCATION & GEOCODING (Unchanged) ---
+
+        /**
+         * Uses the browser's Geolocation API to find and set the current location.
+         */
+        function getCurrentLocationAndSetOrigin() {
+            loadingDiv.classList.remove('hidden');
+            errorDiv.classList.add('hidden');
+            document.getElementById('origin').value = 'Locating...'; // Clear input while fetching
+            
+            if (!navigator.geolocation) {
+                displayError("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // Reverse Geocode the coordinates to display a readable address
+                const reverseGeoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
+                try {
+                    const response = await fetch(reverseGeoUrl);
+                    const data = await response.json();
+                    
+                    const address = data.display_name || `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
+                    document.getElementById('origin').value = address;
+                    
+                    // Store the actual coordinates for routing
+                    originCoords = { lat, lon, display_name: address };
+                    
+                    loadingDiv.classList.add('hidden');
+                    calculateRoute(); // Automatically trigger calculation if destination is set
+                } catch (e) {
+                    displayError("Could not reverse-geocode your location.");
+                }
+            }, (error) => {
+                loadingDiv.classList.add('hidden');
+                let message = "Could not get your location.";
+                if (error.code === error.PERMISSION_DENIED) {
+                    message += " Please enable location services in your browser settings.";
+                }
+                displayError(message);
+                document.getElementById('origin').value = ''; // Clear locating message
+            });
+        }
+
+        /**
+         * Geocodes a location query (address/name) using the Nominatim API.
+         * @param {string} query The address or place name to search for.
+         * @returns {Promise<object|null>} Object {lat, lon, display_name} or null on failure.
+         */
+        async function geocodeLocation(query) {
+            if (!query) return null;
+            const url = `${NOMINATIM_URL}${encodeURIComponent(query)}&limit=1`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    return {
+                        lat: parseFloat(data[0].lat),
+                        lon: parseFloat(data[0].lon),
+                        display_name: data[0].display_name
+                    };
+                }
+            } catch (error) {
+                console.error("Geocoding failed:", error);
+            }
+            return null;
+        }
+
+        // --- ROUTING LOGIC (Unchanged from previous update) ---
+
+        /**
+         * Fetches road route data (distance, duration, geometry) from the ORS API with retry logic.
+         * If road routing fails, falls back to Haversine (straight-line) distance.
+         * @param {object} origin {lat, lon}
+         * @param {object} destination {lat, lon}
+         * @returns {Promise<object|null>} Object containing route details.
+         */
+        async function getRoadRoute(origin, destination) {
+            // ORS expects coordinates in [lon, lat] format
+            const coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
+            const url = `${ORS_ENDPOINT}${coords}`;
+            
+            let lastError = null;
+            let roadRouteFound = false;
+
+            for (let i = 0; i < MAX_RETRIES; i++) {
+                try {
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        const statusText = response.statusText || `HTTP Status ${response.status}`;
+                        lastError = `Routing service returned an error (${statusText}). This specific demo service may have limited road data coverage in the requested region.`;
+                        throw new Error(lastError); 
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.routes && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        
+                        if (route.summary && typeof route.summary.distance !== 'undefined' && typeof route.summary.duration !== 'undefined') {
+                            // Successful road route calculation
+                            roadRouteFound = true;
+                            return {
+                                distance_km: route.summary.distance / 1000,
+                                duration_sec: route.summary.duration,
+                                type: 'road',
+                                geojson: {
+                                    type: 'FeatureCollection',
+                                    features: [{
+                                        type: 'Feature',
+                                        geometry: route.geometry, // Polyline (GeoJSON)
+                                        properties: {}
+                                    }]
+                                }
+                            };
+                        } else {
+                            // Route structure found but metrics missing (the issue you reported)
+                            lastError = "Route found but summary metrics (distance/duration) are missing. This usually means the routing service could not calculate a valid path by road.";
+                        }
+                    } else if (data.error) {
+                        lastError = `Routing Error: ${data.error.message || 'Route not found or service unavailable.'}`;
+                    } else {
+                        lastError = "Received an unexpected response from the routing service. The API response format was invalid.";
+                    }
+                } catch (error) {
+                    if (error.message.includes("Routing service returned an error")) {
+                        lastError = error.message; 
+                    } else {
+                        lastError = "Failed to connect to the routing service (Network or Parsing Error).";
+                        console.error(`Routing API call failed (Retry ${i + 1}):`, error);
+                    }
+                }
+
+                if (i < MAX_RETRIES - 1) {
+                    const delay = INITIAL_BACKOFF_MS * Math.pow(2, i);
+                    await sleep(delay);
+                }
+            }
+
+            // --- FALLBACK: Haversine Distance Calculation ---
+            const haversineDistance = calculateHaversineDistance(origin.lat, origin.lon, destination.lat, destination.lon);
+            
+            displayError(`Road routing failed (Reason: ${lastError}). Displaying straight-line distance fallback.`);
+
+            return {
+                distance_km: haversineDistance,
+                duration_sec: null, // No duration for straight line
+                type: 'fallback',
+                geojson: null // No route geometry to display
+            };
+        }
+
+
+        // --- DYNAMIC UI UPDATE FUNCTION ---
+
+        /**
+         * Updates the text of the capacity analysis button based on the current input values.
+         */
+        function updateAnalysisButtonText(originName, destinationName) {
+            if (analysisButtonTextSpan) {
+                // Use the input values directly for the prompt suggestion
+                analysisButtonTextSpan.textContent = `Generate Analysis for ${originName} to ${destinationName}`;
+            }
+        }
+
+
+        // --- LLM ANALYSIS FUNCTION (Updated to be dynamic) ---
+
+        /**
+         * Generates an analysis of road capacity improvements using the Gemini API.
+         */
+        async function generateCapacityAnalysis() {
+            analysisOutputDiv.classList.add('hidden');
+            analysisLoadingDiv.classList.remove('hidden');
+            
+            const originName = document.getElementById('origin').value.trim();
+            const destinationName = document.getElementById('destination').value.trim();
+
+            const systemPrompt = "Act as an infrastructure planning consultant. Provide a comprehensive analysis of methods to increase the capacity, efficiency, and safety of a major inter-city road, focusing on short-term fixes (TDM) and long-term capital projects. Format the output using Markdown.";
+            
+            // Dynamic user query using the current origin and destination
+            const userQuery = `How can the road capacity and efficiency of the ${originName} to ${destinationName} highway be improved, considering economic and safety factors? If the road is well-known, provide specific, relevant regional examples.`;
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${LLM_API_KEY}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            let result = null;
+            let attempts = 0;
+            let success = false;
+
+            while (attempts < MAX_RETRIES && !success) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    result = await response.json();
+                    success = true; // Request succeeded
+                    
+                } catch (error) {
+                    console.error(`LLM API call failed (Retry ${attempts + 1}):`, error);
+                    attempts++;
+                    if (attempts < MAX_RETRIES) {
+                        const delay = INITIAL_BACKOFF_MS * Math.pow(2, attempts - 1);
+                        await sleep(delay);
+                    }
+                }
+            }
+            
+            analysisLoadingDiv.classList.add('hidden');
+
+            if (!result || !success) {
+                analysisText.innerHTML = '<p class="text-red-600">Failed to generate analysis after multiple retries. The AI service may be temporarily unavailable.</p>';
+                analysisOutputDiv.classList.remove('hidden');
+                return;
+            }
+
+            const candidate = result.candidates?.[0];
+
+            if (candidate && candidate.content?.parts?.[0]?.text) {
+                // 1. Extract the generated text
+                const text = candidate.content.parts[0].text;
+                analysisText.innerHTML = marked.parse(text); // Use a simple parser if needed, otherwise raw text.
+                
+                // 2. Extract grounding sources
+                let sources = [];
+                const groundingMetadata = candidate.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                    sources = groundingMetadata.groundingAttributions
+                        .map(attribution => ({
+                            uri: attribution.web?.uri,
+                            title: attribution.web?.title,
+                        }))
+                        .filter(source => source.uri && source.title);
+                }
+
+                // 3. Display sources
+                if (sources.length > 0) {
+                    analysisSources.innerHTML = '<strong>Sources:</strong><ul>' + 
+                        sources.map(s => `<li><a href="${s.uri}" target="_blank" class="text-blue-500 hover:text-blue-700">${s.title}</a></li>`).join('') +
+                        '</ul>';
+                } else {
+                     analysisSources.innerHTML = '<strong>Note:</strong> No specific external sources were used for grounding this analysis.';
+                }
+                
+                analysisOutputDiv.classList.remove('hidden');
+
+            } else {
+                analysisText.innerHTML = '<p class="text-red-600">Analysis failed. The Gemini API returned an empty or malformed response.</p>';
+                analysisOutputDiv.classList.remove('hidden');
+            }
+        }
+
+
+        // --- MAIN CONTROL FLOW (Updated) ---
+
+        /**
+         * Initializes the Leaflet map and sets the initial view.
+         */
+        function initMap() {
+            map = L.map('map').setView([45.4111, 10.1989], 5); // Central Europe (Zoom 5)
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Run initial calculation with default values and update button text
+            const initialOrigin = document.getElementById('origin').value;
+            const initialDestination = document.getElementById('destination').value;
+            updateAnalysisButtonText(initialOrigin, initialDestination);
+            calculateRoute(); 
+        }
+
+        /**
+         * Main function to coordinate geocoding, routing, and map drawing.
+         */
+        async function calculateRoute() {
+            clearMap();
+            loadingDiv.classList.remove('hidden');
+            
+            const originQuery = document.getElementById('origin').value.trim();
+            const destinationQuery = document.getElementById('destination').value.trim();
+
+            if (!originQuery || !destinationQuery) {
+                displayError("Please enter a location for both Origin and Destination.");
+                return;
+            }
+
+            // --- 1. Determine Origin Coordinates (from Geolocation or Geocoding) ---
+            let currentOriginCoords = originCoords;
+            if (!currentOriginCoords || currentOriginCoords.display_name !== originQuery) {
+                const data = await geocodeLocation(originQuery);
+                if (!data) { displayError(`Could not find origin location: ${originQuery}`); return; }
+                currentOriginCoords = data;
+            }
+
+            // --- 2. Determine Destination Coordinates (Geocoding) ---
+            const destData = await geocodeLocation(destinationQuery);
+            if (!destData) { displayError(`Could not find destination location: ${destinationQuery}`); return; }
+            destCoords = destData;
+            
+            // Persist the successfully used origin coordinates if they were manually entered and successfully geocoded
+            originCoords = currentOriginCoords;
+
+
+            // --- 3. Get Road Route or Fallback ---
+            const routeData = await getRoadRoute(originCoords, destCoords);
+            loadingDiv.classList.add('hidden');
+
+            if (!routeData) {
+                // If the fallback itself failed (highly unlikely since it's local code), return.
+                return;
+            }
+            
+            // --- Crucial Update: Update button text after successful geocoding ---
+            updateAnalysisButtonText(originQuery, destinationQuery);
+
+
+            // --- 4. Update UI ---
+            if (routeData.type === 'fallback') {
+                document.getElementById('distance-label').textContent = "Straight-Line Distance (Fallback)";
+                document.getElementById('distance-output').classList.add('text-red-600');
+                document.getElementById('duration-output').classList.remove('text-blue-700');
+                document.getElementById('duration-output').classList.add('text-red-600');
+
+            } else {
+                document.getElementById('distance-label').textContent = "Road Distance";
+                document.getElementById('distance-output').classList.remove('text-red-600');
+                document.getElementById('duration-output').classList.remove('text-red-600');
+                document.getElementById('duration-output').classList.add('text-blue-700');
+            }
+
+            document.getElementById('distance-output').textContent = `${routeData.distance_km.toFixed(1)} km`;
+            document.getElementById('duration-output').textContent = formatDuration(routeData.duration_sec);
+            document.getElementById('location-details').innerHTML = `
+                Origin: <strong>${originCoords.display_name}</strong><br>
+                Destination: <strong>${destCoords.display_name}</strong>
+            `;
+            resultDiv.classList.remove('hidden');
+
+            // --- 5. Update Map (Markers and Route) ---
+            const originLatLng = [originCoords.lat, originCoords.lon];
+            const destLatLng = [destCoords.lat, destCoords.lon];
+            
+            // Add Markers
+            originMarker = L.marker(originLatLng, { title: 'Origin' }).addTo(map)
+                .bindPopup(`<b>START:</b><br>${originCoords.display_name}`).openPopup();
+            
+            destinationMarker = L.marker(destLatLng, { title: 'Destination' }).addTo(map)
+                .bindPopup(`<b>END:</b><br>${destCoords.display_name}`).openPopup();
+
+            // Draw GeoJSON Route ONLY if road routing succeeded
+            if (routeData.geojson) {
+                currentRoute = L.geoJSON(routeData.geojson, {
+                    style: {
+                        color: '#10B981', // green-500
+                        weight: 4,
+                        opacity: 0.85
+                    }
+                }).addTo(map);
+            }
+
+            // Fit the map view to show both points, regardless of route success
+            const bounds = L.latLngBounds(originLatLng, destLatLng);
+            map.fitBounds(bounds, { padding: [50, 50] }); 
+            
+            map.invalidateSize();
+        }
+
+        // --- Third-party library for parsing Markdown to HTML (Simple version) ---
+        // Note: For real-world use, import a full library like 'marked'
+        const marked = {
+            parse: (markdown) => {
+                let html = markdown
+                    .replace(/^(#+)\s*(.*)/gm, (match, hashes, content) => `<h${hashes.length}>${content}</h${hashes.length}>`)
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^- (.*)/gm, '<li>$1</li>')
+                    .replace(/^- (.*)(\n^- )+[^-\n]*/g, '<ul>$&</ul>')
+                    .replace(/(^|[^>])\n(?![<*#])/g, '$1<br>\n'); // Convert double newlines to paragraphs/breaks
+                
+                // Final wrapping for lists (simple version, not robust for nested lists)
+                if (html.includes('<li>')) {
+                    html = html.replace(/<\/ul>\s*<ul>/g, '').replace(/<li>.*?<\/ul>/g, '<ul>$&</ul>');
+                }
+                return html;
+            }
+        };
+
+        // Start the application
+        window.onload = initMap;
+    </script>
+</body>
+</html>
