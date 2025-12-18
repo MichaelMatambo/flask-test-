@@ -13,6 +13,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta, timezone 
 from functools import wraps 
 from flask_cors import CORS 
+from bson.json_util import dumps # <-- NEW: Import for safe MongoDB JSON serialization
 
 # --- Application Initialization ---
 
@@ -192,6 +193,48 @@ def login_user():
 
 # --- Business Routes ---
 
+@app.route('/api/businesses/map', methods=['GET']) # <-- NEW ROUTE FOR MAP
+def get_businesses_for_map():
+    """
+    Retrieves a list of all businesses, specifically including their ID, name, 
+    and geographic location for map display. This endpoint is called once on 
+    frontend load to populate all markers.
+    """
+    try:
+        # Fetch all businesses, projecting only the necessary fields for the map popup and marker
+        businesses = businesses_collection.find({}, 
+            {'_id': 1, 'name': 1, 'latitude': 1, 'longitude': 1, 'categories': 1, 
+             'avg_rating': 1, 'review_count': 1, 'address': 1, 'city': 1}
+        )
+        
+        # Restructure data to match the frontend's OpenLayers expectation (location: {lat, lon})
+        mapped_businesses = []
+        for business in businesses:
+             # Only include businesses with valid coordinates
+             if business.get('latitude') is not None and business.get('longitude') is not None:
+                mapped_businesses.append({
+                    '_id': str(business['_id']),
+                    'name': business['name'],
+                    'address': business['address'],
+                    'city': business['city'],
+                    'categories': business.get('category', ''), # Use 'category' field name from DB
+                    'avg_rating': business.get('avg_rating', 0.0),
+                    'review_count': business.get('review_count', 0),
+                    # Structure coordinates as expected by the OpenLayers frontend
+                    'location': {
+                        'lat': business['latitude'],
+                        'lon': business['longitude']
+                    }
+                })
+
+        # Use dumps() for correct ObjectId serialization
+        return dumps({"businesses": mapped_businesses}), 200
+        
+    except Exception as e:
+        print(f"Error fetching businesses for map: {e}")
+        return jsonify({"error": "Failed to fetch map data", "details": str(e)}), 500
+
+
 @app.route('/api/businesses', methods=['GET'])
 def get_businesses():
     """
@@ -318,13 +361,21 @@ def register_business(current_user):
     """Registers a new business, requiring coordinates from the user."""
     data = request.get_json()
     
-    required_fields = ['name', 'address', 'city', 'state', 'zip_code', 'category', 'phone', 'latitude', 'longitude']
+    required_fields = ['name', 'address', 'city', 'state', 'zip_code', 'categories', 'phone_number', 'latitude', 'longitude']
     for field in required_fields:
         if not data.get(field):
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    if not isinstance(data.get('category'), list) or not data['category']:
-        return jsonify({"error": "Category must be a non-empty list of strings"}), 400
+    # The frontend is sending categories as a comma-separated string,
+    # but the existing check expects a list.
+    # We will adjust the backend to handle the string from the frontend.
+    categories_str = data.get('categories')
+    if not categories_str or not isinstance(categories_str, str):
+        return jsonify({"error": "Categories must be provided as a comma-separated string"}), 400
+    
+    categories_list = [c.strip() for c in categories_str.split(',') if c.strip()]
+    if not categories_list:
+        return jsonify({"error": "Category list cannot be empty"}), 400
         
     try:
         # Convert coordinates to float
@@ -346,8 +397,8 @@ def register_business(current_user):
         "city": data['city'],
         "state": data['state'],
         "zip_code": data['zip_code'],
-        "category": data['category'],
-        "phone": data['phone'],
+        "category": categories_list, # Store as a list
+        "phone": data['phone_number'],
         "latitude": latitude,
         "longitude": longitude,
         "website": data.get('website', ''), 
@@ -375,7 +426,7 @@ def submit_review(current_user):
     """
     data = request.get_json()
     
-    required_fields = ['business_id', 'rating', 'review_text']
+    required_fields = ['business_id', 'rating', 'text']
     for field in required_fields:
         if not data.get(field):
             return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -383,6 +434,7 @@ def submit_review(current_user):
     try:
         business_oid = ObjectId(data['business_id'])
         rating = int(data['rating'])
+        review_text = data['text'] # Match frontend field name
         
         if not 1 <= rating <= 5:
               return jsonify({"error": "Rating must be between 1 and 5 stars"}), 400
@@ -407,7 +459,7 @@ def submit_review(current_user):
         "user_id": current_user['_id'],
         "username": current_user['username'],
         "rating": rating,
-        "review_text": data['review_text'],
+        "review_text": review_text, # Match database field name
         "date_posted": datetime.now(timezone.utc)
     }
 

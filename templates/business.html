@@ -3,37 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Center: ZIMBABWE</title>
+    <title>InjectaReview - Business Center</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.3.0/ol.css">
     
     <style>
-        /* Base Layout Reset */
-        * { box-sizing: border-box; }
+        /* --- 1. Universal Reset and Typography (From style.css) --- */
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        
         html, body { 
             height: 100%; 
             margin: 0; 
             padding: 0; 
-            font-family: Arial, sans-serif; 
-            background-color: #f8f8f8; /* Light background for the whole page */
+            line-height: 1.6;
+            color: #333; 
+            background-color: #f5f5f5; 
+            /* allow scrolling only on the main wrapper for the fixed map layout */
             overflow: hidden; 
         }
+
+        a {
+            color: #0073bb; /* Brand Blue */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: #005a96; /* Darker Brand Blue */
+            text-decoration: underline;
+        }
+
+        h1, h2, h3 {
+            color: #333;
+            margin-bottom: 0.5em;
+        }
+
+        /* --- 2. Header (Navbar) Style (From style.css) --- */
+        .header {
+            background-color: #0073bb; /* Brand Primary Blue */
+            color: white;
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .header .logo {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: white;
+            margin-right: 30px;
+        }
+
+        .header .nav-links {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .nav-links a {
+            color: white;
+            margin-left: 20px;
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .header .nav-links a:hover,
+        .header .nav-links a.active {
+            background-color: #005a96; 
+            text-decoration: none;
+        }
+
+        /* --- 3. Page Structure and Layout (business.html specific) --- */
         
-        /* Main Structure for Fixed/Scroll Layout */
+        /* Main wrapper now fills remaining space after header/footer */
         .main-wrapper { 
-            padding: 20px;
-            height: 100%;
+            padding: 20px 50px;
+            height: calc(100vh - 120px); /* Adjust height based on header/footer height */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
         }
 
-        .header { 
+        .page-title-bar { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             margin-bottom: 20px; 
-            border-bottom: 2px solid #ddd; 
+            border-bottom: 2px solid #eee; 
             padding-bottom: 10px;
             flex-shrink: 0;
         }
@@ -45,17 +108,20 @@
             min-height: 0; 
         }
         
-        /* Left Panel: Scrollable Controls and Results */
         .left-panel {
             width: 450px; 
             overflow-y: auto; 
             padding-right: 15px;
             flex-shrink: 0;
-            min-height: 100%;
             position: relative;
+            /* Scrollbar styling for a cleaner look */
+            scrollbar-width: thin; 
+            scrollbar-color: #0073bb #f0f0f0;
         }
+        .left-panel::-webkit-scrollbar { width: 8px; }
+        .left-panel::-webkit-scrollbar-thumb { background-color: #0073bb; border-radius: 10px; }
+        .left-panel::-webkit-scrollbar-track { background: #f0f0f0; }
 
-        /* Right Panel: Fixed Map */
         .map-panel {
             flex-grow: 1;
             height: 100%;
@@ -63,51 +129,10 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); 
         }
 
-        /* Map Styling */
-        #map { 
-            height: 100%; 
-            width: 100%; 
-            border-radius: 6px; 
-            border: 2px solid #0073bb; /* Brand Blue Border */
-            position: relative; 
-        }
+        /* --- 4. Form & Section Styles --- */
 
-        /* OpenLayers Control Styling and Z-Index Fix */
-        .ol-zoom {
-            top: 20px;
-            left: 20px;
-            z-index: 101; 
-            background-color: transparent !important; 
-        }
-        .ol-zoom .ol-control button {
-            background-color: rgba(255, 255, 255, 0.9) !important;
-            color: #0073bb; /* Brand Blue */
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            font-weight: bold;
-        }
-        
-        .ol-custom-layer-switcher {
-            top: 20px;
-            right: 20px;
-            position: absolute; 
-            padding: 10px;
-            background-color: rgba(255,255,255,0.95); 
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 100; 
-        }
-        .ol-custom-layer-switcher label {
-            display: block;
-            font-weight: normal;
-            font-size: 0.9em;
-            margin: 4px 0;
-            cursor: pointer;
-        }
-        
-        /* --- General and Form Styling Improvements --- */
-        h1 { color: #0073bb; margin: 0; } /* Brand Blue */
-        .user-info { font-size: 1.1em; font-weight: bold; }
+        h1 { color: #0073bb; margin: 0; } 
+        .user-info { font-size: 1.1em; font-weight: bold; color: white;}
         .section { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); margin-bottom: 20px; }
         .section h2 { margin-top: 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
 
@@ -133,8 +158,9 @@
             outline: none;
         }
         
-        button { 
-            background-color: #0073bb; /* Primary Button Color (Brand Blue) */
+        /* Primary Button Style (Brand Blue) */
+        button[type="submit"], button#registerBtn { 
+            background-color: #0073bb; 
             color: white; 
             padding: 12px 20px; 
             border: none; 
@@ -147,17 +173,17 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             width: 100%; 
         }
-        button:hover { 
-            background-color: #005a94; /* Darker Blue for hover */
+        button[type="submit"]:hover, button#registerBtn:hover { 
+            background-color: #005a94; 
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
         }
         button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
 
         .details-button { 
-            width: auto; 
+            width: auto !important; /* Override the 100% width */
             margin-left: 0; 
             margin-top: 5px; 
-            background-color: #0073bb; /* Consistent Brand Blue */
+            background-color: #0073bb; 
             padding: 8px 15px;
             font-size: 14px;
         }
@@ -196,24 +222,109 @@
             margin-top: 0; 
             background-color: #0073bb; 
         }
-        
-        /* Rest of necessary styles */
+
+        /* Message Styling */
         .map-instruction { background-color: #fff8e1; color: #666; padding: 10px; border-radius: 4px; margin-bottom: 10px; border-left: 4px solid #ffc107; font-size: 0.9em; }
         .message { margin-top: 20px; padding: 10px; border-radius: 4px; font-weight: bold; display: none; }
         .success { background-color: #e6ffed; color: #155724; border: 1px solid #c3e6cb; }
         .error { background-color: #f8e6e6; color: #721c24; border: 1px solid #f5c6cb; }
-        .business-list { list-style: none; padding: 0; margin: 0; }
-        .business-item { border: 1px solid #eee; padding: 15px; margin-bottom: 15px; border-radius: 6px; transition: background-color 0.2s; background: white; }
-        .business-item h3 { margin-top: 0; color: #0073bb; } /* Brand Blue for business names */
         .rating { font-weight: bold; color: #ff9800; font-size: 1.1em;}
+
+        /* Business List */
+        .business-list { list-style: none; padding: 0; margin: 0; }
+        .business-item { border: 1px solid #eee; padding: 15px; margin-bottom: 15px; border-radius: 6px; transition: background-color 0.2s; background: white; border-left: 4px solid #0073bb; }
+        .business-item h3 { margin-top: 0; color: #0073bb; } 
         
-        /* OL Popup Styling */
+        /* --- 5. Map & OpenLayers Styles --- */
+
+        #map { 
+            height: 100%; 
+            width: 100%; 
+            border-radius: 6px; 
+            border: 2px solid #0073bb; 
+            position: relative; 
+        }
+
+        .ol-zoom { top: 20px; left: 20px; z-index: 101; background-color: transparent !important; }
+        .ol-zoom .ol-control button {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            color: #0073bb; 
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+        
+        .ol-custom-layer-switcher {
+            top: 20px; right: 20px; position: absolute; padding: 10px;
+            background-color: rgba(255,255,255,0.95); border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100; 
+        }
+        .ol-custom-layer-switcher label { display: block; font-weight: normal; font-size: 0.9em; margin: 4px 0; cursor: pointer; }
+        
+        .ol-popup {
+            position: absolute;
+            background-color: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            bottom: 12px;
+            left: -50px;
+            min-width: 250px;
+        }
+        .ol-popup:after, .ol-popup:before {
+            top: 100%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+        .ol-popup:after {
+            border-top-color: white;
+            border-width: 10px;
+            left: 48px;
+            margin-left: -10px;
+        }
+        .ol-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+            left: 48px;
+            margin-left: -11px;
+        }
+        .ol-popup-closer {
+            text-decoration: none;
+            position: absolute;
+            top: 2px;
+            right: 8px;
+            font-size: 1.2em;
+            color: #999;
+        }
+        .ol-popup-closer:after {
+            content: "✖";
+        }
+        .ol-popup h4 { margin-top: 0; margin-bottom: 5px; color: #0073bb;}
+        .ol-popup p { margin: 0; font-size: 0.9em; color: #555; }
         .ol-popup button { width: auto; margin-top: 8px; padding: 6px 12px; font-size: 13px; }
 
-        /* Responsiveness */
+
+        /* --- 6. Footer Style (From style.css) --- */
+        .footer {
+            background-color: #333; 
+            color: white;
+            padding: 10px 50px; /* Reduced padding for compact footer */
+            text-align: center;
+            font-size: 0.9em;
+            flex-shrink: 0;
+            line-height: 1.5;
+        }
+
+        /* --- 7. Responsiveness --- */
         @media (max-width: 1200px) {
             html, body { overflow: auto; }
-            .main-wrapper { height: auto; padding: 10px; }
+            .header, .main-wrapper, .footer { padding-left: 20px; padding-right: 20px; }
+            .main-wrapper { height: auto; }
             .content-area { flex-direction: column; height: auto; gap: 10px; }
             .left-panel { width: 100%; padding-right: 0; overflow-y: visible; min-height: auto; }
             .map-panel { width: 100%; height: 400px; position: static; }
@@ -223,12 +334,23 @@
 </head>
 <body>
     <script src="https://cdn.jsdelivr.net/npm/ol@v7.3.0/dist/ol.js"></script>
+    
+    <header class="header">
+        <div class="logo">InjectaReview</div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="business.html" class="active">Browse</a>
+            <a href="#" onclick="alert('TODO: Implement User Profile')">Profile</a>
+            <div class="user-info" style="margin-left: 30px;">
+                <span id="userDisplay">Guest</span> (<a href="index.html">Logout</a>)
+            </div>
+        </nav>
+    </header>
 
     <div class="main-wrapper">
-        <div class="header">
+        <div class="page-title-bar">
             <h1>🗺️ Business Center: ZIMBABWE</h1>
-            <div class="user-info">Logged in as: <span id="userDisplay">Guest</span> (<a href="index.html">Logout</a>)</div>
-        </div>
+            </div>
 
         <div class="content-area">
             
@@ -254,7 +376,7 @@
                     <h2>Search Results</h2>
                     <div id="resultsMessage" class="message"></div>
                     <ul id="businessList" class="business-list">
-                        <li style="padding: 20px; text-align: center; color: #999;">
+                        <li style="padding: 20px; text-align: center; color: #999; border-left: none;">
                             Use the search form above to find businesses.
                         </li>
                     </ul>
@@ -280,16 +402,16 @@
                             
                             <label for="biz-city">City: *</label>
                             <input type="text" id="biz-city" placeholder="e.g., Harare" required>
-                            
+
                             <label for="biz-state">State/Province: *</label>
                             <input type="text" id="biz-state" placeholder="e.g., Harare Province" required>
-                            
+
                             <label for="biz-zip">Zip Code: *</label>
                             <input type="text" id="biz-zip" placeholder="e.g., 00263" required>
-                            
+
                             <label for="biz-category">Categories (comma-separated): *</label>
                             <input type="text" id="biz-category" placeholder="e.g., Pizza, Italian, Restaurant" required>
-                            
+
                             <label for="biz-phone">Phone Number: *</label>
                             <input type="tel" id="biz-phone" placeholder="e.g., (263) 123-4567" required>
 
@@ -298,18 +420,18 @@
 
                             <label for="biz-longitude">Longitude: *</label>
                             <input type="text" id="biz-longitude" readonly placeholder="Click map to set location" required>
-                            
+
                             <button type="submit" id="registerBtn" title="Please log in to register businesses">Register Business</button>
                         </form>
                     </div>
                 </div>
-                
-                <button id="fixedAddBusinessBtn" class="details-button" onclick="toggleRegistrationForm(null, 'expand')">
+
+                <button id="fixedAddBusinessBtn" onclick="toggleRegistrationForm(null, 'expand')">
                     ➕ Add Business Location
                 </button>
 
                 <div id="singleBusinessView" class="section" style="display:none;">
-                    <button onclick="closeSingleView()" style="float: right; background: #999;">✕ Close</button>
+                    <button onclick="closeSingleView()" style="float: right; background: #999; width: auto; padding: 6px 12px; margin-top: 0;">✕ Close</button>
                     <h2 id="singleBizName"></h2>
                     <p><strong>Rating:</strong> <span id="singleBizRating" class="rating"></span> ⭐ (<span id="singleBizReviewCount"></span> reviews)</p>
                     <p><strong>Address:</strong> <span id="singleBizAddress"></span></p>
@@ -328,10 +450,8 @@
                             <input type="hidden" id="review-business-id">
                             <label for="review-rating">Rating (1-5 stars): *</label>
                             <input type="number" id="review-rating" min="1" max="5" required style="width: 100px;">
-                            
                             <label for="review-text">Your Review: *</label>
                             <input type="text" id="review-text" placeholder="Share your experience..." required>
-                            
                             <button type="submit">Post Review</button>
                         </form>
                         <div id="reviewMessage" class="message"></div>
@@ -352,48 +472,174 @@
         </div>
     </div>
 
+    <footer class="footer">
+        <p>&copy; 2025 InjectaReview. Powered by Injecta Analytics.</p>
+    </footer>
 
     <script>
         // Use ol namespace for OpenLayers
         const { Map, View, layer, source, Feature, geom, style, proj, control, interaction, Overlay } = ol;
-
-        // --- API Configuration & Helpers ---
-        const API_URL = 'http://127.0.0.1:5000/api'; 
         
+        // --- API Configuration & Category Icons ---
+        const API_URL = 'http://127.0.0.1:5000/api';
+
+        // Category to Emoji Mapping for Map Icons
+        const categoryIcons = {
+            'restaurant': '🍔', 'pizza': '🍕', 'italian': '🍝', 'coffee': '☕', 'cafe': '☕', 'bar': '🍻',
+            'night club': '🎶', 'hotel': '🏨', 'lodge': '🛎️', 'grocery': '🛒', 'supermarket': '🛒', 
+            'hardware': '🛠️', 'electronics': '📺', 'furniture': '🛋️', 'clothing': '👗', 'pharmacy': '⚕️', 
+            'clinic': '🏥', 'hospital': '🏥', 'education': '📚', 'fuel station': '⛽', 'car sale': '🚗', 
+            'barber': '💇', 'salon': '💅', 'church': '⛪', 'default': '🏢' // Default icon for all others
+        };
+
         let map;
         let vectorSource, clusterSource, vectorLayer;
         let tempRegistrationFeature;
-        let tempVectorLayer;
-        let popupOverlay;
-
-        // Zimbabwe Focus Coordinates
-        const ZIMBABWE_CENTER_LONLAT = [29.7469, -19.0154]; 
-        const ZIMBABWE_INITIAL_ZOOM = 6; 
-        const defaultCenter = proj.fromLonLat(ZIMBABWE_CENTER_LONLAT); 
-
-        // --- OpenLayers Styles ---
-        const BRAND_BLUE = '#0073bb';
-        const BRAND_BLUE_RGBA = 'rgba(0, 115, 187, 0.8)';
         
-        // Business icon changed to blue
-        const businessStyle = new style.Style({
-            text: new style.Text({
-                text: '🏢',
-                font: '24px sans-serif',
-                fill: new style.Fill({ color: BRAND_BLUE }), 
-                stroke: new style.Stroke({ color: '#ffffff', width: 2 }),
-                offsetY: -16
-            })
-        });
+        // Coordinates for Zimbabwe center (Harare)
+        const ZIMBABWE_CENTER_LON = 31.0530; 
+        const ZIMBABWE_CENTER_LAT = -17.8248; 
+        const ZIMBABWE_INITIAL_ZOOM = 10;
+        const defaultCenter = proj.fromLonLat([ZIMBABWE_CENTER_LON, ZIMBABWE_CENTER_LAT]);
 
-        const clusterStyle = function(feature) {
+        // --- AUTHENTICATION & UI HELPERS ---
+
+        /**
+         * Reads the token from localStorage and updates the UI (Logout link, button states).
+         */
+        function checkAuthAndDisplay() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username') || 'Guest';
+            const userDisplay = document.getElementById('userDisplay');
+            const registerBtn = document.getElementById('registerBtn');
+            const reviewAuthMessage = document.getElementById('reviewAuthMessage');
+
+            userDisplay.textContent = username;
+            
+            if (token) {
+                // User is logged in
+                if (registerBtn) {
+                    registerBtn.removeAttribute('disabled');
+                    registerBtn.removeAttribute('title');
+                }
+                if (reviewAuthMessage) reviewAuthMessage.style.display = 'none';
+                document.getElementById('reviewFormSection').style.display = 'block';
+            } else {
+                // User is a guest
+                if (registerBtn) {
+                    registerBtn.setAttribute('disabled', 'true');
+                    registerBtn.setAttribute('title', 'Please log in to register businesses');
+                }
+                if (reviewAuthMessage) reviewAuthMessage.style.display = 'block';
+                document.getElementById('reviewFormSection').style.display = 'none';
+            }
+        }
+        
+        /**
+         * Toggles the display of a message element.
+         * @param {string} id - The ID of the message container element.
+         * @param {string} type - 'success' or 'error'.
+         * @param {string} message - The message text.
+         */
+        function displayMessage(id, type, message) {
+            const element = document.getElementById(id);
+            element.textContent = message;
+            element.className = `message ${type}`;
+            element.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        /**
+         * Toggles the business registration form visibility.
+         * @param {Event} event - The click event (optional).
+         * @param {string} forceState - 'expand' or 'collapse' (optional).
+         */
+        function toggleRegistrationForm(event, forceState) {
+            if (event) event.preventDefault();
+
+            const section = document.getElementById('registrationSection');
+            const link = section.querySelector('.form-toggle-link');
+            const fixedBtn = document.getElementById('fixedAddBusinessBtn');
+            const isCollapsed = section.classList.contains('collapsed');
+
+            let newState = isCollapsed;
+            if (forceState === 'expand') {
+                newState = false;
+            } else if (forceState === 'collapse') {
+                newState = true;
+            }
+
+            if (newState) {
+                section.classList.add('collapsed');
+                link.textContent = 'Expand';
+                fixedBtn.style.display = 'block';
+            } else {
+                section.classList.remove('collapsed');
+                link.textContent = 'Collapse';
+                fixedBtn.style.display = 'none';
+            }
+        }
+
+        // --- MAP FUNCTIONS (STYLES, INTERACTION) ---
+        
+        /**
+         * Gets the appropriate emoji for the business category.
+         * @param {string} categoryString - Comma-separated categories.
+         */
+        function getCategoryEmoji(categoryString) {
+            if (!categoryString) return categoryIcons.default;
+            const categories = categoryString.toLowerCase().split(',').map(c => c.trim());
+            
+            for (const category of categories) {
+                if (categoryIcons[category]) {
+                    return categoryIcons[category];
+                }
+            }
+            return categoryIcons.default;
+        }
+
+        /**
+         * Creates the OpenLayers style for a single business marker.
+         * @param {Feature} feature - The OpenLayers feature.
+         */
+        function createBusinessStyle(feature) {
+            const businessData = feature.get('businessData');
+            const category = businessData ? businessData.categories || '' : '';
+            const emoji = getCategoryEmoji(category);
+            const rating = businessData ? (businessData.avg_rating || 0).toFixed(1) : '';
+            const color = rating >= 4.0 ? '#4CAF50' : (rating >= 3.0 ? '#FFC107' : '#F44336');
+
+            return new style.Style({
+                image: new style.Circle({
+                    radius: 12,
+                    fill: new style.Fill({ color: color }),
+                    stroke: new style.Stroke({ color: '#fff', width: 2 })
+                }),
+                text: new style.Text({
+                    text: emoji,
+                    font: '14px sans-serif',
+                    offsetY: 0,
+                    fill: new style.Fill({ color: '#333' })
+                })
+            });
+        }
+        
+        /**
+         * Creates the OpenLayers style for a cluster of markers.
+         * @param {Feature} feature - The OpenLayers cluster feature.
+         */
+        function clusterStyle(feature) {
             const size = feature.get('features').length;
             if (size > 1) {
                 return new style.Style({
                     image: new style.Circle({
-                        radius: 12 + (Math.min(size, 100) / 10),
-                        fill: new style.Fill({ color: BRAND_BLUE_RGBA }), // Blue for cluster circle
-                        stroke: new style.Stroke({ color: 'rgba(255, 255, 255, 1)', width: 2 })
+                        radius: 15,
+                        stroke: new style.Stroke({ color: '#fff', width: 2 }),
+                        fill: new style.Fill({ color: 'rgba(0, 115, 187, 0.8)' }) // Brand Blue
                     }),
                     text: new style.Text({
                         text: size.toString(),
@@ -402,123 +648,127 @@
                     })
                 });
             } else {
-                return businessStyle;
-            }
-        };
-
-        const tempMarkerStyle = new style.Style({
-            text: new style.Text({
-                text: '📍',
-                font: '32px sans-serif',
-                fill: new style.Fill({ color: BRAND_BLUE }),
-                stroke: new style.Stroke({ color: '#ffffff', width: 2 }),
-                offsetY: -16
-            })
-        });
-
-        // --- Helper Functions (Auth, Message, Display) ---
-        function getAuthHeaders() {
-            const token = localStorage.getItem('jwt_token');
-            if (!token) return {};
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            };
-        }
-
-        function displayMessage(elementId, type, text) {
-            const msg = document.getElementById(elementId);
-            msg.className = `message ${type}`;
-            msg.textContent = text;
-            msg.style.display = 'block';
-            setTimeout(() => msg.style.display = 'none', 7000);
-        }
-
-        function checkAuthAndDisplay() {
-            const username = localStorage.getItem('username');
-            const token = localStorage.getItem('jwt_token');
-            
-            document.getElementById('userDisplay').textContent = username || 'Guest (Not Logged In)'; 
-            
-            const registerBtn = document.getElementById('registerBtn');
-            const reviewForm = document.getElementById('submitReviewForm');
-            const reviewAuthMsg = document.getElementById('reviewAuthMessage');
-
-            if (!username || !token) {
-                registerBtn.disabled = true;
-                registerBtn.title = "Please log in to register businesses";
-                
-                if (reviewForm) reviewForm.style.display = 'none';
-                if (reviewAuthMsg) reviewAuthMsg.style.display = 'block';
-
-            } else {
-                registerBtn.disabled = false;
-                registerBtn.title = "Register Business";
-
-                if (reviewForm) reviewForm.style.display = 'block';
-                if (reviewAuthMsg) reviewAuthMsg.style.display = 'none';
+                // Return the style for the single feature within the cluster
+                return createBusinessStyle(feature.get('features')[0]);
             }
         }
         
-        // --- Map Control & UI Functions (Collapsing/Expanding) ---
-        window.toggleRegistrationForm = function(event, forceState = null) {
-            if (event) event.preventDefault();
+        /**
+         * Style for the temporary marker used during business registration.
+         */
+        function tempMarkerStyle() {
+            return new style.Style({
+                image: new style.Circle({
+                    radius: 10,
+                    stroke: new style.Stroke({ color: '#fff', width: 2 }),
+                    fill: new style.Fill({ color: 'red' })
+                }),
+                text: new style.Text({
+                    text: '📍',
+                    font: '16px sans-serif',
+                    offsetY: -1,
+                })
+            });
+        }
+        
+        /**
+         * Handles map click event: either setting a registration point or showing a business popup.
+         * @param {MapBrowserEvent} evt - The OpenLayers map browser event.
+         */
+        function handleMapClick(evt) {
+            // 1. Check for feature click (Business)
+            let featureClicked = false;
+            map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+                if (feature.get('features')) {
+                    // This is a cluster, zoom in
+                    const extent = feature.get('features')[0].getGeometry().getExtent();
+                    map.getView().fit(extent, {
+                        duration: 500,
+                        maxZoom: map.getView().getZoom() + 1
+                    });
+                    featureClicked = true;
+                    return; // Stop processing after cluster click
+                }
+                
+                // This is a single business marker
+                const businessData = feature.get('businessData');
+                if (businessData) {
+                    showBusinessPopup(evt.coordinate, businessData);
+                    featureClicked = true;
+                }
+            });
             
-            const section = document.getElementById('registrationSection');
-            const toggleLink = section.querySelector('.form-toggle-link');
-            const fixedBtn = document.getElementById('fixedAddBusinessBtn');
-            
-            const isCollapsed = section.classList.contains('collapsed');
-            let shouldCollapse = isCollapsed;
+            if (featureClicked) return;
 
-            if (forceState === 'expand') {
-                shouldCollapse = false;
-            } else if (forceState === 'collapse') {
-                shouldCollapse = true;
-            } else if (event) {
-                shouldCollapse = !isCollapsed;
-            }
-
-            if (shouldCollapse) {
-                section.classList.add('collapsed');
-                toggleLink.textContent = 'Expand';
-                fixedBtn.style.display = 'block';
-            } else {
-                section.classList.remove('collapsed');
-                toggleLink.textContent = 'Collapse';
-                fixedBtn.style.display = 'none';
-                // Scroll the form into view when expanding
-                document.querySelector('.left-panel').scrollTo({
-                    top: section.offsetTop - 20,
-                    behavior: 'smooth'
-                });
-            }
+            // 2. Set registration coordinates if no feature was clicked
+            setRegistrationCoords(evt.coordinate);
         }
 
+        /**
+         * Updates the registration form's Lat/Lon fields and sets the temp marker.
+         * @param {Coordinate} coordinate - The map coordinate in map projection.
+         */
+        function setRegistrationCoords(coordinate) {
+            const coords4326 = proj.toLonLat(coordinate);
+            
+            document.getElementById('biz-longitude').value = coords4326[0].toFixed(5);
+            document.getElementById('biz-latitude').value = coords4326[1].toFixed(5);
+            
+            // Clear previous temp marker
+            tempVectorLayer.getSource().clear();
+            
+            // Create new temp marker feature
+            tempRegistrationFeature = new Feature({
+                geometry: new geom.Point(coordinate)
+            });
+            tempVectorLayer.getSource().addFeature(tempRegistrationFeature);
+
+            // Ensure registration form is visible
+            toggleRegistrationForm(null, 'expand'); 
+            
+            // Scroll to the registration coordinates inputs
+            document.getElementById('registrationSection').scrollIntoView({ behavior: 'smooth' });
+        }
+        
         // --- MAP INITIALIZATION ---
         function initMap() {
             console.log('Initializing OpenLayers map...');
             
             const osmLayer = new layer.Tile({
                 title: '🗺️ Street Map',
-                type: 'base',
+                visible: true,
                 source: new source.OSM()
             });
 
             const satelliteLayer = new layer.Tile({
                 title: '🛰️ Satellite',
-                type: 'base',
+                visible: false,
                 source: new source.XYZ({
                     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                     attributions: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-                }),
-                visible: false
+                })
             });
 
             vectorSource = new source.Vector();
-            clusterSource = new source.Cluster({ distance: 40, source: vectorSource });
-            vectorLayer = new layer.Vector({ title: 'Businesses', source: clusterSource, style: clusterStyle });
-            tempVectorLayer = new layer.Vector({ title: 'Registration Point', source: new source.Vector(), style: tempMarkerStyle });
+            clusterSource = new source.Cluster({ 
+                distance: 40, // Distance in pixels to group features
+                source: vectorSource 
+            });
+
+            // The vector layer uses the clusterStyle function which handles single/cluster features
+            vectorLayer = new layer.Vector({ 
+                title: 'Businesses', 
+                source: clusterSource, 
+                style: clusterStyle 
+            });
+
+            // Layer for temporary marker during registration
+            tempVectorLayer = new layer.Vector({ 
+                title: 'Registration Point', 
+                source: new source.Vector(), 
+                style: tempMarkerStyle 
+            });
+
 
             map = new Map({
                 target: 'map',
@@ -528,7 +778,7 @@
                     zoom: ZIMBABWE_INITIAL_ZOOM
                 }),
                 controls: control.defaults.defaults({
-                    zoom: false, 
+                    zoom: false, // Disable default zoom control
                     rotate: false,
                     attribution: true
                 })
@@ -543,28 +793,45 @@
 
             // 2. Layer Switcher (Top-Right)
             const layerSwitcherContainer = document.createElement('div');
-            layerSwitcherContainer.className = 'ol-custom-layer-switcher ol-unselectable ol-control'; 
+            layerSwitcherContainer.className = 'ol-custom-layer-switcher';
             
-            const baseLayers = [osmLayer, satelliteLayer];
-            baseLayers.forEach(l => {
+            const createLayerSwitcher = (layer) => {
+                const layerId = `layer-${layer.get('title').replace(/\s/g, '-')}`;
                 const label = document.createElement('label');
-                label.innerHTML = `<input type="radio" name="baseLayer" value="${l.get('title')}" ${l.getVisible() ? 'checked' : ''}> ${l.get('title')}`;
-                label.querySelector('input').addEventListener('change', (e) => {
-                    baseLayers.forEach(bl => bl.setVisible(bl.get('title') === e.target.value));
-                });
+                label.innerHTML = `<input type="radio" name="base-layer" id="${layerId}" value="${layer.get('title')}"> ${layer.get('title')}`;
+                
+                const input = label.querySelector('input');
+                input.checked = layer.getVisible();
+
+                input.onchange = (e) => {
+                    // Hide all base layers (OSM and Satellite)
+                    osmLayer.setVisible(false);
+                    satelliteLayer.setVisible(false);
+                    
+                    // Show the selected layer
+                    if (e.target.value === '🗺️ Street Map') {
+                        osmLayer.setVisible(true);
+                    } else if (e.target.value === '🛰️ Satellite') {
+                        satelliteLayer.setVisible(true);
+                    }
+                };
                 layerSwitcherContainer.appendChild(label);
-            });
+            };
+
+            createLayerSwitcher(osmLayer);
+            createLayerSwitcher(satelliteLayer);
             map.addControl(new control.Control({ element: layerSwitcherContainer }));
 
 
             // Popup Overlay Setup 
-            const container = document.getElementById('popup');
+            const popupElement = document.getElementById('popup');
             const closer = document.getElementById('popup-closer');
-            popupOverlay = new Overlay({
-                element: container,
-                autoPan: { animation: { duration: 250 } },
-                positioning: 'bottom-center',
-                offset: [0, -20]
+            const popupOverlay = new Overlay({
+                element: popupElement,
+                autoPan: true,
+                autoPanAnimation: {
+                    duration: 250,
+                },
             });
             map.addOverlay(popupOverlay);
 
@@ -576,112 +843,48 @@
 
             map.on('click', handleMapClick);
         }
-
+        
         /**
-         * Resets the map view back to the default Zimbabwe extent and zoom.
+         * Displays a popup on the map for a given business.
+         * @param {Coordinate} coordinate - The map coordinate for the popup anchor.
+         * @param {object} businessData - The business data object.
          */
-        function resetMapView() {
-            map.getView().animate({ 
-                center: defaultCenter, 
-                zoom: ZIMBABWE_INITIAL_ZOOM, 
-                duration: 800 
-            });
-            popupOverlay.setPosition(undefined);
-        }
-        
-        function handleMapClick(evt) {
-            popupOverlay.setPosition(undefined);
+        function showBusinessPopup(coordinate, businessData) {
+            const popupContent = document.getElementById('popup-content');
+            const rating = (businessData.avg_rating || 0).toFixed(1);
+            const reviewCount = businessData.review_count || 0;
 
-            const feature = map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-                return feature;
-            });
-            
-            if (feature) {
-                const clusteredFeatures = feature.get('features');
-                if (clusteredFeatures && clusteredFeatures.length > 1) {
-                    // Zoom in on cluster to reveal individual features
-                    const extent = feature.getGeometry().getExtent();
-                    map.getView().fit(extent, { duration: 500, padding: [100, 100, 100, 100] });
-                } else if (clusteredFeatures && clusteredFeatures.length === 1) {
-                    // Show popup for single business
-                    const business = clusteredFeatures[0].get('businessData');
-                    showBusinessPopup(feature.getGeometry().getCoordinates(), business);
-                }
-            } else {
-                // Set coordinates for registration if no feature was clicked
-                setRegistrationCoords(evt);
-            }
-        }
-        
-        function showBusinessPopup(coordinates, business) {
-            const contentDiv = document.getElementById('popup-content');
-            contentDiv.innerHTML = `
-                <div class="popup-content">
-                    <strong style="font-size: 1.1em;">${business.name}</strong><br>
-                    <span style="color: #ff9800;">⭐ ${business.avg_rating ? parseFloat(business.avg_rating).toFixed(1) : 'N/A'}</span> 
-                    (${business.review_count || 0} reviews)<br>
-                    <small>${business.city}</small><br>
-                    <button onclick="fetchBusinessDetails('${business._id}')" class="details-button" style="background-color: #0073bb;">
-                        View Details
-                    </button>
-                </div>
+            popupContent.innerHTML = `
+                <h4>${businessData.name}</h4>
+                <p>Rating: <span class="rating">${rating} ⭐</span> (${reviewCount} reviews)</p>
+                <p>${businessData.address}, ${businessData.city}</p>
+                <button class="details-button" onclick="window.fetchBusinessDetails('${businessData._id}')">View Details</button>
             `;
-            popupOverlay.setPosition(coordinates);
+
+            const popupOverlay = map.getOverlayById('popup');
+            popupOverlay.setPosition(coordinate);
         }
 
-        function setRegistrationCoords(evt) {
-            const coords3857 = evt.coordinate;
-            const coords4326 = proj.toLonLat(coords3857);
-            const lng = coords4326[0].toFixed(6);
-            const lat = coords4326[1].toFixed(6);
 
-            tempVectorLayer.getSource().clear();
-
-            const geometry = new geom.Point(coords3857);
-            tempRegistrationFeature = new Feature({ geometry });
-            tempRegistrationFeature.setStyle(tempMarkerStyle);
-            tempVectorLayer.getSource().addFeature(tempRegistrationFeature);
-            
-            map.getView().animate({ center: coords3857, zoom: 14, duration: 300 });
-
-            const contentDiv = document.getElementById('popup-content');
-            contentDiv.innerHTML = `
-                <div class="popup-content">
-                    <strong>New Location:</strong><br>
-                    Lat: ${lat}<br>
-                    Lng: ${lng}<br>
-                    <button class="details-button" onclick="openRegistrationForm('${lat}', '${lng}')" style="background-color: green;">
-                        Use this location for Registration
-                    </button>
-                </div>
-            `;
-            popupOverlay.setPosition(coords3857);
-        }
-
-        window.openRegistrationForm = function(lat, lng) {
-            document.getElementById('biz-latitude').value = lat;
-            document.getElementById('biz-longitude').value = lng;
-            
-            toggleRegistrationForm(null, 'expand');
-            
-            popupOverlay.setPosition(undefined);
-            displayMessage('resultsMessage', 'success', 'Coordinates transferred! Fill out the rest of the form to register.');
-        };
-
-
+        // --- DATA RENDERING FUNCTIONS ---
+        
+        /**
+         * Populates the map with features from an array of business data.
+         * @param {Array<object>} businesses - List of business data objects.
+         */
         function displayBusinessesOnMap(businesses) {
-            vectorSource.clear();
-            popupOverlay.setPosition(undefined);
-
+            vectorSource.clear(); // Clear existing markers
+            
             const features = businesses.map(business => {
-                const lat = parseFloat(business.latitude);
-                const lng = parseFloat(business.longitude);
-
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    const coords3857 = proj.fromLonLat([lng, lat]);
+                if (business.location && business.location.longitude && business.location.latitude) {
+                    const lonLat = [business.location.longitude, business.location.latitude];
+                    
                     const feature = new Feature({
-                        geometry: new geom.Point(coords3857),
-                        businessData: business
+                        geometry: new geom.Point(proj.fromLonLat(lonLat)),
+                        // Store the full business data object on the feature
+                        businessData: business, 
+                        // Add a separate ID property for clustering/identification
+                        _id: business._id 
                     });
                     return feature;
                 }
@@ -690,222 +893,269 @@
 
             vectorSource.addFeatures(features);
             
+            // Zoom to the extent of the new markers
             if (features.length > 0) {
-                const extent = vectorSource.getExtent();
-                // Pad the map view to account for the left panel (450px width + 20px padding)
-                map.getView().fit(extent, { padding: [50, 50, 50, 470], duration: 500, maxZoom: 15 });
+                 map.getView().fit(vectorSource.getExtent(), {
+                     padding: [50, 50, 50, 50],
+                     duration: 1000
+                 });
             } else {
-                resetMapView();
+                 // If no results, reset to default view
+                 map.getView().setCenter(defaultCenter);
+                 map.getView().setZoom(ZIMBABWE_INITIAL_ZOOM);
             }
         }
 
-        // --- SEARCH BUSINESSES ---
-        document.getElementById('searchForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            
-            const searchTerm = document.getElementById('search-term').value.trim();
-            const cityFilter = document.getElementById('city-filter').value.trim();
-            const categoryFilter = document.getElementById('category-filter').value.trim();
+        /**
+         * Renders the list of businesses in the left panel.
+         * @param {Array<object>} businesses - List of business data objects.
+         */
+        function displayBusinessesInList(businesses) {
+            const list = document.getElementById('businessList');
+            list.innerHTML = ''; // Clear previous list
 
-            const params = new URLSearchParams();
-            if (searchTerm) params.append('search', searchTerm);
-            if (cityFilter) params.append('city', cityFilter);
-            if (categoryFilter) params.append('category', categoryFilter);
-
-            const url = `${API_URL}/businesses?${params.toString()}`;
-            console.log(`Fetching businesses from: ${url}`);
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                const list = document.getElementById('businessList');
-                list.innerHTML = ''; 
-                document.getElementById('singleBusinessView').style.display = 'none'; 
-                resetMapView(); 
-
-                if (response.ok && data.businesses && data.businesses.length > 0) {
-                    displayMessage('resultsMessage', 'success', `✅ Found ${data.total_count} businesses. (Registration form collapsed)`);
-                    
-                    displayBusinessesOnMap(data.businesses);
-                    
-                    toggleRegistrationForm(null, 'collapse');
-
-                    data.businesses.forEach(business => {
-                        const listItem = document.createElement('li');
-                        listItem.className = 'business-item';
-                        listItem.innerHTML = `
-                            <h3>${business.name}</h3>
-                            <p style="margin: 5px 0; color: #666;">
-                                📍 ${business.address}, ${business.city}, ${business.state}
-                            </p>
-                            <p style="margin: 5px 0;">
-                                <span class="rating">⭐ ${business.avg_rating ? parseFloat(business.avg_rating).toFixed(1) : 'N/A'}</span> 
-                                (${business.review_count || 0} reviews)
-                            </p>
-                            <button class="details-button" onclick="fetchBusinessDetails('${business._id}')">
-                                View Details & Reviews
-                            </button>
-                        `;
-                        list.appendChild(listItem);
-                    });
-
-                } else {
-                    displayMessage('resultsMessage', 'error', data.message || '❌ No businesses found matching your criteria.');
-                    list.innerHTML = '<li style="padding: 20px; text-align: center; color: #999;">No results found. Try a different search.</li>';
-                    vectorSource.clear(); 
-                    resetMapView(); 
-                }
-            } catch (error) {
-                displayMessage('resultsMessage', 'error', '❌ Network error or failed to connect to API. Check your backend server.');
-                console.error('Search Error:', error);
-            }
-        });
-
-
-        // --- REGISTER NEW BUSINESS ---
-        document.getElementById('registerBusinessForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            
-            const lat = document.getElementById('biz-latitude').value;
-            const lng = document.getElementById('biz-longitude').value;
-            
-            if (!lat || !lng) {
-                displayMessage('resultsMessage', 'error', '📍 Please set the business location using the map on the right first!');
+            if (businesses.length === 0) {
+                list.innerHTML = `
+                    <li style="padding: 20px; text-align: center; color: #999; border-left: none;">
+                        No businesses found matching your criteria.
+                    </li>
+                `;
                 return;
             }
-            if (!localStorage.getItem('jwt_token')) {
-                 displayMessage('resultsMessage', 'error', '❌ Registration requires you to be logged in.');
-                 return;
-            }
 
-            const businessData = {
-                name: document.getElementById('biz-name').value.trim(),
-                address: document.getElementById('biz-address').value.trim(),
-                city: document.getElementById('biz-city').value.trim(),
-                state: document.getElementById('biz-state').value.trim(),
-                zip_code: document.getElementById('biz-zip').value.trim(),
-                category: document.getElementById('biz-category').value.split(',').map(c => c.trim()).filter(c => c.length > 0), 
-                phone: document.getElementById('biz-phone').value.trim(),
-                latitude: lat,
-                longitude: lng
-            };
+            businesses.forEach(business => {
+                const rating = (business.avg_rating || 0).toFixed(1);
+                const reviewCount = business.review_count || 0;
+                
+                const item = document.createElement('li');
+                item.className = 'business-item';
+                item.innerHTML = `
+                    <h3>${getCategoryEmoji(business.categories)} ${business.name}</h3>
+                    <p><strong>Rating:</strong> <span class="rating">${rating} ⭐</span> (${reviewCount} reviews)</p>
+                    <p>Address: ${business.address}, ${business.city}</p>
+                    <p>Category: ${business.categories}</p>
+                    <button class="details-button" onclick="fetchBusinessDetails('${business._id}')">View Details & Reviews</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        /**
+         * Hides the list view and shows the single business details view.
+         * @param {object} business - The business data object.
+         */
+        function showSingleBusinessView(business) {
+            document.getElementById('singleBusinessView').style.display = 'block';
+            document.getElementById('businessList').parentElement.style.display = 'none';
+            document.getElementById('searchForm').parentElement.style.display = 'none';
+            document.getElementById('registrationSection').style.display = 'none';
+            document.getElementById('fixedAddBusinessBtn').style.display = 'none';
 
-            try {
-                const response = await fetch(`${API_URL}/businesses`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify(businessData)
+
+            // Populate details
+            document.getElementById('singleBizName').textContent = business.name;
+            document.getElementById('singleBizAddress').textContent = `${business.address}, ${business.city}, ${business.state}, ${business.zip_code}`;
+            document.getElementById('singleBizCategory').textContent = business.categories;
+            document.getElementById('singleBizPhone').textContent = business.phone_number;
+            document.getElementById('singleBizRating').textContent = (business.avg_rating || 0).toFixed(1);
+            document.getElementById('singleBizReviewCount').textContent = business.review_count || 0;
+            document.getElementById('review-business-id').value = business._id;
+            
+            // Render Reviews
+            const reviewsList = document.getElementById('reviewsList');
+            reviewsList.innerHTML = '';
+            
+            if (business.reviews && business.reviews.length > 0) {
+                business.reviews.forEach(review => {
+                    const item = document.createElement('li');
+                    item.className = 'business-item';
+                    item.style.borderLeftColor = '#ff9800'; // Orange border for reviews
+                    item.innerHTML = `
+                        <p><strong>${review.username}</strong> on ${new Date(review.date_submitted.$date).toLocaleDateString()}</p>
+                        <p>Rating: <span class="rating">${review.rating} ⭐</span></p>
+                        <p>${review.text}</p>
+                    `;
+                    reviewsList.appendChild(item);
                 });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    displayMessage('resultsMessage', 'success', `✅ Business "${businessData.name}" registered successfully!`);
-                    this.reset();
-                    tempVectorLayer.getSource().clear();
-                    popupOverlay.setPosition(undefined);
-                    
-                    toggleRegistrationForm(null, 'collapse');
-                    
-                    document.getElementById('searchForm').dispatchEvent(new Event('submit')); 
-                } else if (response.status === 409) {
-                    displayMessage('resultsMessage', 'error', '⚠️ ' + (data.error || 'A business with this name and address already exists.'));
-                } else {
-                    displayMessage('resultsMessage', 'error', '❌ ' + (data.error || `Registration failed. Status: ${response.status}`));
-                }
-            } catch (error) {
-                displayMessage('resultsMessage', 'error', '❌ Network error during business registration. Check your backend server.');
-                console.error('Registration Error:', error);
+            } else {
+                reviewsList.innerHTML = `<li style="padding: 20px; text-align: center; color: #999; border-left: none;">No reviews yet. Be the first!</li>`;
             }
-        });
+        }
+        
+        /**
+         * Closes the single business view and returns to the search results view.
+         */
+        function closeSingleView() {
+            document.getElementById('singleBusinessView').style.display = 'none';
+            document.getElementById('businessList').parentElement.style.display = 'block';
+            document.getElementById('searchForm').parentElement.style.display = 'block';
+            document.getElementById('registrationSection').style.display = 'block';
+            document.getElementById('fixedAddBusinessBtn').style.display = 'block';
+            document.getElementById('reviewMessage').style.display = 'none'; // Clear any review message
+        }
 
+        // --- API CALLS (Search, Details, Register, Review) ---
 
-        // --- VIEW BUSINESS DETAILS ---
+        /**
+         * Fetches all details and reviews for a specific business ID.
+         * @param {string} businessId - The MongoDB ObjectId of the business.
+         */
         async function fetchBusinessDetails(businessId) {
             try {
                 const response = await fetch(`${API_URL}/businesses/${businessId}`);
                 const data = await response.json();
                 
-                const view = document.getElementById('singleBusinessView');
-                
                 if (response.ok) {
-                    const business = data.business;
-                    
-                    // Center and zoom map to the single business location
-                    const coords3857 = proj.fromLonLat([business.longitude, business.latitude]);
-                    map.getView().animate({ center: coords3857, zoom: 16, duration: 500 });
-                    
-                    showBusinessPopup(coords3857, business);
-
-                    document.getElementById('singleBizName').textContent = business.name;
-                    document.getElementById('singleBizRating').textContent = business.avg_rating ? parseFloat(business.avg_rating).toFixed(1) : 'N/A';
-                    document.getElementById('singleBizReviewCount').textContent = business.review_count || 0;
-                    document.getElementById('singleBizAddress').textContent = 
-                        `${business.address}, ${business.city}, ${business.state} ${business.zip_code}`;
-                    document.getElementById('singleBizCategory').textContent = business.category.join(', ');
-                    document.getElementById('singleBizPhone').textContent = business.phone || 'N/A';
-
-                    const reviewsList = document.getElementById('reviewsList');
-                    reviewsList.innerHTML = '';
-                    if (business.reviews && business.reviews.length > 0) {
-                        business.reviews.sort((a, b) => new Date(b.date_posted) - new Date(a.date_posted)); 
-                        business.reviews.forEach(review => {
-                            const reviewItem = document.createElement('li');
-                            reviewItem.className = 'business-item';
-                            reviewItem.innerHTML = `
-                                <strong style="color: #0073bb;">${review.username || 'Anonymous'}</strong> 
-                                <span class="rating">⭐ ${review.rating}/5</span> 
-                                <small style="color: #999;">(${new Date(review.date_posted).toLocaleDateString()})</small>
-                                <p style="margin: 10px 0 0 0;">${review.review_text}</p>
-                            `;
-                            reviewsList.appendChild(reviewItem);
-                        });
-                    } else {
-                        reviewsList.innerHTML = '<li style="padding: 20px; text-align: center; color: #999;">No reviews yet. Be the first to review!</li>';
-                    }
-
-                    document.getElementById('review-business-id').value = business._id;
-                    checkAuthAndDisplay(); 
-
-                    view.style.display = 'block';
-                    document.querySelector('.left-panel').scrollTo({ behavior: 'smooth', top: view.offsetTop - 20 });
-                    
+                    showSingleBusinessView(data);
                 } else {
-                    displayMessage('resultsMessage', 'error', '❌ ' + (data.error || 'Failed to fetch business details.'));
+                    alert('Error fetching business details: ' + (data.error || 'Unknown error'));
+                    console.error('Error details:', data);
                 }
             } catch (error) {
-                displayMessage('resultsMessage', 'error', '❌ Network error while fetching details.');
-                console.error('Details Fetch Error:', error);
+                alert('Network error while fetching business details. Check server connection.');
+                console.error('Fetch Details Error:', error);
             }
         }
 
-        function closeSingleView() {
-            document.getElementById('singleBusinessView').style.display = 'none';
-            // Reset map to Zimbabwe view when closing the details panel
-            resetMapView();
-        }
 
-
-        // --- SUBMIT REVIEW ---
-        document.getElementById('submitReviewForm').addEventListener('submit', async function(event) {
+        // --- EVENT HANDLERS ---
+        
+        // Handle Business Search Form Submission
+        document.getElementById('searchForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             
-            const reviewData = {
-                business_id: document.getElementById('review-business-id').value,
-                rating: parseInt(document.getElementById('review-rating').value),
-                review_text: document.getElementById('review-text').value.trim()
-            };
+            const searchTerm = document.getElementById('search-term').value;
+            const cityFilter = document.getElementById('city-filter').value;
+            const categoryFilter = document.getElementById('category-filter').value;
+            const resultsMessage = document.getElementById('resultsMessage');
             
-             if (!localStorage.getItem('jwt_token')) {
-                 displayMessage('reviewMessage', 'error', '❌ You must be logged in to post a review.');
+            // Close single view if it was open
+            closeSingleView();
+
+            try {
+                const queryParams = new URLSearchParams({
+                    search: searchTerm,
+                    city: cityFilter,
+                    category: categoryFilter
+                });
+                
+                const response = await fetch(`${API_URL}/businesses?${queryParams.toString()}`);
+                const data = await response.json();
+
+                if (response.ok && data.businesses) {
+                    displayBusinessesOnMap(data.businesses);
+                    displayBusinessesInList(data.businesses);
+                    
+                    resultsMessage.textContent = `Found ${data.businesses.length} businesses.`;
+                    resultsMessage.className = 'message success';
+                    resultsMessage.style.display = 'block';
+                    
+                } else {
+                    displayBusinessesOnMap([]);
+                    displayBusinessesInList([]);
+                    
+                    resultsMessage.textContent = '❌ ' + (data.error || 'Failed to fetch search results.');
+                    resultsMessage.className = 'message error';
+                    resultsMessage.style.display = 'block';
+                }
+            } catch (error) {
+                displayBusinessesOnMap([]);
+                displayBusinessesInList([]);
+                resultsMessage.textContent = '❌ Network error. Check your backend server connection.';
+                resultsMessage.className = 'message error';
+                resultsMessage.style.display = 'block';
+                console.error('Search Error:', error);
+            }
+        });
+
+        // Handle Business Registration Form Submission
+        document.getElementById('registerBusinessForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const registerBtn = document.getElementById('registerBtn');
+            if (registerBtn.disabled) return;
+            registerBtn.disabled = true;
+
+            const registrationData = {
+                name: document.getElementById('biz-name').value,
+                address: document.getElementById('biz-address').value,
+                city: document.getElementById('biz-city').value,
+                state: document.getElementById('biz-state').value,
+                zip_code: document.getElementById('biz-zip').value,
+                categories: document.getElementById('biz-category').value,
+                phone_number: document.getElementById('biz-phone').value,
+                latitude: parseFloat(document.getElementById('biz-latitude').value),
+                longitude: parseFloat(document.getElementById('biz-longitude').value)
+            };
+
+            // Basic validation
+            if (isNaN(registrationData.latitude) || isNaN(registrationData.longitude)) {
+                 displayMessage('resultsMessage', 'error', '❌ Please click on the map to set a valid location.');
+                 registerBtn.disabled = false;
                  return;
             }
 
             try {
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch(`${API_URL}/businesses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+
+                const data = await response.json();
+                registerBtn.disabled = false;
+
+                if (response.ok) {
+                    displayMessage('resultsMessage', 'success', `✅ Business "${registrationData.name}" registered successfully!`);
+                    
+                    // Clear the form and temp marker
+                    this.reset(); 
+                    tempVectorLayer.getSource().clear();
+                    toggleRegistrationForm(null, 'collapse');
+                    
+                    // Trigger a search to refresh the list and map
+                    document.getElementById('searchForm').dispatchEvent(new Event('submit')); 
+
+                } else {
+                    displayMessage('resultsMessage', 'error', '❌ ' + (data.error || 'Failed to register business.'));
+                }
+            } catch (error) {
+                registerBtn.disabled = false;
+                displayMessage('resultsMessage', 'error', '❌ Network error during registration. Check your backend server.');
+                console.error('Registration Error:', error);
+            }
+        });
+        
+        // Handle Review Submission Form
+        document.getElementById('submitReviewForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const reviewData = {
+                business_id: document.getElementById('review-business-id').value,
+                rating: parseInt(document.getElementById('review-rating').value, 10),
+                text: document.getElementById('review-text').value,
+            };
+
+            // Basic validation
+            if (reviewData.rating < 1 || reviewData.rating > 5) {
+                displayMessage('reviewMessage', 'error', '❌ Rating must be between 1 and 5.');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                
                 const response = await fetch(`${API_URL}/reviews`, {
                     method: 'POST',
-                    headers: getAuthHeaders(),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify(reviewData)
                 });
 
@@ -939,6 +1189,13 @@
             
             // Set initial state to collapsed for cleaner startup
             toggleRegistrationForm(null, 'collapse');
+            
+            // FIX: Automatically trigger a search on page load to populate the business list and the map
+            // An empty search fetches all businesses and calls displayBusinessesOnMap/displayBusinessesInList.
+            const searchForm = document.getElementById('searchForm');
+            if (searchForm) {
+                searchForm.dispatchEvent(new Event('submit')); 
+            }
         });
 
         // Make functions globally accessible for HTML onclick attributes

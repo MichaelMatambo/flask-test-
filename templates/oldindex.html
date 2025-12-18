@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yelp Clone - Welcome</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 50px; background-color: #f4f4f4; }
+        .intro-box { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 600px; margin-bottom: 30px; text-align: center; }
+        .intro-box h1 { color: #0073bb; /* Changed from #d32323 (Red) to Blue */ margin-top: 0; }
+        .auth-container { display: flex; justify-content: center; width: 100%; }
+        .container { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); width: 350px; }
+        h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; color: #0073bb; /* Changed from #d32323 (Red) to Blue */ }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="email"], input[type="password"] { width: calc(100% - 20px); padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; }
+        button { 
+            background-color: #0073bb; /* Changed from #d32323 (Red) to Blue */
+            color: white; 
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: 10px; 
+            transition: background-color 0.2s; /* Added transition for smoothness */
+        }
+        button:hover { background-color: #005a96; /* Changed from #c00 (Dark Red) to Dark Blue */ }
+        
+        #message { margin-top: 20px; padding: 10px; border-radius: 4px; font-weight: bold; display: none; }
+        .success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        
+        /* Form Toggling */
+        .auth-forms { min-height: 400px; }
+        .form-hidden { display: none; }
+        /* These were already blue, so they remain blue */
+        .toggle-btn { background-color: #0073bb; margin-top: 15px; } 
+        .toggle-btn:hover { background-color: #005a96; } 
+        
+        /* Guest Link Styling */
+        .guest-link { display: block; text-align: center; margin-top: 15px; font-weight: bold; color: #0073bb; text-decoration: none; }
+        .guest-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="intro-box">
+        <h1>Welcome to our Business Review Platform!</h1>
+        <p>This is a community-driven business review platform designed to help users discover great local businesses (restaurants, bars, shops, etc.).</p>
+        <p><strong>Business Review Features:</strong> Browse businesses, register your own business, and post reviews and ratings.</p>
+        <p>Please log in or register to get started. You must be logged in to register a business or submit a review.</p>
+    </div>
+
+    <title>InjectaReview - Welcome</title>
+
+    <div class="container auth-forms">
+        
+        <div id="registerContainer" class="form-hidden">
+            <h2>Register New User</h2>
+            <form id="registerForm">
+                <label for="reg-username">Username:</label>
+                <input type="text" id="reg-username" required>
+
+                <label for="reg-email">Email:</label>
+                <input type="email" id="reg-email" required>
+
+                <label for="reg-password">Password (Min 8 characters):</label>
+                <input type="password" id="reg-password" minlength="8" required>
+
+                <button type="submit">Register</button>
+            </form>
+            <button class="toggle-btn" onclick="toggleForms('login')">Already have an account? Log In</button>
+            <a href="business.html" class="guest-link">Login as Guest (Browse Only)</a>
+        </div>
+
+
+        <div id="loginContainer">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" required>
+
+                <label for="login-password">Password:</label>
+                <input type="password" id="login-password" required>
+
+                <button type="submit">Login</button>
+            </form>
+            <button class="toggle-btn" onclick="toggleForms('register')">Need an account? Register Here</button>
+            <a href="business.html" class="guest-link">Login as Guest (Browse Only)</a>
+        </div>
+
+        <div id="message"></div>
+        
+        </div>
+
+
+    <script>
+        // --- API Configuration ---
+        const API_URL = 'http://127.0.0.1:5000/api'; 
+
+        // --- Utility Functions ---
+        function displayMessage(type, text) {
+            const msg = document.getElementById('message');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 7000); 
+        }
+
+        function toggleForms(target) {
+            const loginContainer = document.getElementById('loginContainer');
+            const registerContainer = document.getElementById('registerContainer');
+
+            if (target === 'register') {
+                loginContainer.classList.add('form-hidden');
+                registerContainer.classList.remove('form-hidden');
+            } else { // target === 'login'
+                registerContainer.classList.add('form-hidden');
+                loginContainer.classList.remove('form-hidden');
+            }
+            document.getElementById('message').style.display = 'none';
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if user is already logged in (optional check, as they can go to business.html)
+            const token = localStorage.getItem('jwt_token');
+            if (token) {
+                // If a token exists, the user may still prefer to navigate directly
+                // We'll default to the login view and let them click the business link
+                console.log("Token found. User might be logged in.");
+            }
+            toggleForms('login'); 
+        });
+
+
+        // --- Registration Logic ---
+        document.getElementById('registerForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+
+            // **NEW CLIENT-SIDE VALIDATION**
+            if (password.length < 8) {
+                displayMessage('error', 'Password must be at least 8 characters long.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayMessage('success', `Registration successful! Welcome, ${data.username}. Please log in.`);
+                    this.reset(); 
+                    // Automatically switch to the login form
+                    toggleForms('login'); 
+
+                } else {
+                    displayMessage('error', data.error || 'Registration failed.');
+                }
+            } catch (error) {
+                displayMessage('error', 'Network error or server unavailable.');
+                console.error('Registration Error:', error);
+            }
+        });
+
+
+        // --- Login Logic ---
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('jwt_token', data.token);
+                    localStorage.setItem('username', data.username);
+                    
+                    displayMessage('success', `Login successful! Welcome back, ${data.username}. Redirecting...`);
+                    this.reset();
+                    
+                    // Automatically redirect to the business page after login
+                    setTimeout(() => {
+                        window.location.href = 'business.html';
+                    }, 1000);
+
+                } else {
+                    displayMessage('error', data.error || 'Invalid email or password.');
+                }
+            } catch (error) {
+                displayMessage('error', 'Network error or server unavailable.');
+                console.error('Login Error:', error);
+            }
+        });
+    </script>
+
+</body>
+</html>
